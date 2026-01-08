@@ -1,0 +1,64 @@
+ php artisan storage:link
+php artisan migrate:fresh --seed
+composer require spatie/laravel-permission
+composer require maatwebsite/excel:"^3.1"
+composer require barryvdh/laravel-dompdf
+composer require thiagoalessio/tesseract_ocr
+
+
+php artisan vendor:publish --provider="Maatwebsite\Excel\ExcelServiceProvider" --tag=config
+
+
+
+
+uncomment
+C:\xampp\php\php.ini
+extension=gd
+extension=zip
+download
+https://github.com/UB-Mannheim/tesseract/wiki
+
+
+
+1️⃣ Install Tesseract OCR
+
+Download the Windows installer from the official repo:
+https://github.com/tesseract-ocr/tesseract
+
+Or directly from: UB Mannheim builds
+
+Run the installer and note the installation path, e.g.:
+
+C:\Program Files\Tesseract-OCR
+
+2️⃣ Add Tesseract to your PATH
+
+Press Win + S → type Environment Variables → Open Edit the system environment variables → click Environment Variables.
+
+Under System variables, find Path → Edit → Add a new entry:
+
+C:\Program Files\Tesseract-OCR
+
+
+Click OK and restart your terminal or VS Code to apply.
+
+3️⃣ Verify installation
+
+Open Command Prompt and run:
+
+tesseract --version
+
+
+You should see something like:
+
+tesseract 5.3.0
+composer require thiagoalessio/tesseract_ocr
+
+
+
+
+ran Command
+php artisan serve
+
+another terminal
+php artisan queue:work // para sa email
