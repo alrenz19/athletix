@@ -54,7 +54,7 @@
 ======================= -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-  <a href="{{ url('/athletes') }}">
+  <a href="{{ url('/coach/athletes') }}">
     <div class="bg-green-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
       <h3 class="text-center font-bold">ATHLETES</h3>
       <p class="text-3xl text-center font-bold">{{ $notificationsCount }}</p>

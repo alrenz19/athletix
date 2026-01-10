@@ -139,7 +139,20 @@
                 <div class="absolute right-[-8px] top-0 h-full w-1 bg-white rounded-l"></div>
             @endif
         </a>
-        <span class="absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Registrations</span>
+        <span class="absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Event Registrations</span>
+    </div>
+
+        <!-- Registration approval -->
+    <div class="relative group">
+      <a href="{{ route('staff.approval.index') }}" class="w-12 h-12 mx-auto text-white hover:bg-[#3E1F0A] transition-colors flex items-center justify-center">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        @if (request()->routeIs('staff.approval.index'))
+          <div class="absolute right-[-8px] top-0 h-full w-1 bg-white rounded-l"></div>
+        @endif
+      </a>
+      <span class="absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Athlete Registrations</span>
     </div>
 
         <!-- Awards -->
