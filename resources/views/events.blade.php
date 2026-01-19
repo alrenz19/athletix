@@ -112,7 +112,7 @@
       <input type="text" name="event_name" class="w-full mb-2 p-2 border rounded">
 
       <label>Event Date</label>
-      <input type="date" name="event_date" class="w-full mb-2 p-2 border rounded">
+      <input type="date" min="<?php echo date('Y-m-d'); ?>"  name="event_date" class="w-full mb-2 p-2 border rounded">
 
       <label>Event Type</label>
       <select name="event_type" class="w-full mb-2 p-2 border rounded">

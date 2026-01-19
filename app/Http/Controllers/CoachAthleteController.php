@@ -17,7 +17,7 @@ class CoachAthleteController extends Controller
         $user = auth()->user();
         
         // Start with base query
-        $query = Athlete::with('sport');
+        $query = Athlete::with('sport')->where('status', 'approved');
         
         // If user is a coach (not superAdmin), filter by their sport
         if ($user->role === 'coach') {

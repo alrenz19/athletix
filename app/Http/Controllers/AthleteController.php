@@ -12,7 +12,7 @@ class AthleteController extends Controller
     public function index(Request $request)
     {
         // Start the query
-        $query = Athlete::with('user', 'sport');
+        $query = Athlete::with('user', 'sport')->where('status', 'approved');
         
         // Apply search filter
         if ($request->filled('search')) {

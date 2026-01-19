@@ -20,13 +20,14 @@ use App\Models\Feedback;
 use App\Models\NonVarsityClub;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
-
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 class ReportController extends Controller
 {
 
     public function index(Request $request)
     {
-        $year = $request->get('year');
+        $year = $request->get('year', Carbon::now()->year);
         $yearLevel = $request->get('year_level');
         $sport = $request->get('sport');
         $status = $request->get('status');
@@ -34,24 +35,242 @@ class ReportController extends Controller
         // Get sports for filter dropdown and sport selection
         $sports = Sport::all();
 
-        // Get athletes with filters
+        // ========== AUTO-GENERATED ATHLETES DATA (FORM C) ==========
         $athletesQuery = Athlete::with(['sport']);
-        
-        if ($year) $athletesQuery->where('academic_year', $year);
+            
+        // Apply filters - using year_level (not academic_year)
         if ($yearLevel) $athletesQuery->where('year_level', $yearLevel);
         if ($sport) $athletesQuery->where('sport_id', $sport);
         if ($status) $athletesQuery->where('status', $status);
-        
-        $athletes = $athletesQuery->get();
 
-        // Get coaches
-        $coaches = Coach::with(['sport'])->get();
+        // Get athlete IDs first
+        $athleteIds = $athletesQuery->pluck('athlete_id');
+        
+        // Eager load events for the specific year in a separate query
+        if ($athleteIds->isEmpty()) {
+            $eventsByAthlete = collect();
+        } else {
+            $eventsByAthlete = DB::table('athlete_event')
+                ->join('events', 'athlete_event.event_id', '=', 'events.event_id')
+                ->whereIn('athlete_event.athlete_id', $athleteIds)
+                ->whereYear('events.event_date', $year)
+                ->select('athlete_event.athlete_id', 'events.*')
+                ->get()
+                ->groupBy('athlete_id');
+        }
+
+        $athletes = $athletesQuery->get()->map(function($athlete) use ($eventsByAthlete, $year) {
+            // Get events for this athlete from the pre-loaded collection
+            $events = $eventsByAthlete[$athlete->athlete_id] ?? collect();
+            
+            // Calculate highest competition level from events (for this year)
+            $highestLevel = 'Local'; // Default
+            
+            if ($events->where('competition_level', 'International')->isNotEmpty()) {
+                $highestLevel = 'International';
+            } elseif ($events->where('competition_level', 'National')->isNotEmpty()) {
+                $highestLevel = 'National';
+            } elseif ($events->where('competition_level', 'Regional')->isNotEmpty()) {
+                $highestLevel = 'Regional';
+            }
+            
+            // Calculate training frequency (days per week from training events)
+            $trainingEvents = $events->where('event_type', 'Training');
+            $trainingDays = $trainingEvents->unique('event_date')->count();
+            $trainingHours = $trainingEvents->avg('duration_hours') ?? 2; // Default 2 hours
+            
+            // Get completed competitions
+            $completedCompetitions = $events->where('event_type', 'Competition')
+                                           ->where('status', 'Completed');
+            
+            // Get competition allowances (if any competitions)
+            $averageCompetitionAllowance = $completedCompetitions->isNotEmpty() ? 
+                $completedCompetitions->avg('allowance') ?? 0 : 0;
+            
+            // Calculate age from birthdate
+            $age = $athlete->birthdate ? Carbon::parse($athlete->birthdate)->age : null;
+            
+            return (object) [
+                'athlete_id' => $athlete->athlete_id,
+                'full_name' => $athlete->full_name,
+                'age' => $age,
+                'year_level' => $athlete->year_level, // Added
+                'sport' => $athlete->sport,
+                'gender' => $athlete->gender,
+                'academic_course' => $athlete->academic_course,
+                'highest_competition_level' => $highestLevel,
+                'highest_accomplishment' => $athlete->highest_accomplishment ?? '-',
+                'international_competition_name' => $athlete->international_competition_name ?? '-',
+                'training_seminars_regional' => (bool)($athlete->training_seminars_regional ?? false),
+                'training_seminars_national' => (bool)($athlete->training_seminars_national ?? false),
+                'training_seminars_international' => (bool)($athlete->training_seminars_international ?? false),
+                'training_frequency_days' => min($trainingDays, 7), // Max 7 days per week
+                'training_hours_per_day' => round($trainingHours, 1),
+                'scholarship_status' => $athlete->scholarship_status ?? 'No',
+                'monthly_living_allowance' => $athlete->monthly_living_allowance ?? 0,
+                'board_lodging_support' => (bool)($athlete->board_lodging_support ?? false),
+                'medical_insurance_support' => (bool)($athlete->medical_insurance_support ?? false),
+                'training_uniforms_support' => (bool)($athlete->training_uniforms_support ?? false),
+                'average_tournament_allowance' => $averageCompetitionAllowance,
+                'playing_uniforms_sponsorship' => (bool)($athlete->playing_uniforms_sponsorship ?? false),
+                'playing_gears_sponsorship' => (bool)($athlete->playing_gears_sponsorship ?? false),
+                'excused_from_academic_obligations' => (bool)($athlete->excused_from_academic_obligations ?? false),
+                'flexible_academic_schedule' => (bool)($athlete->flexible_academic_schedule ?? false),
+                'academic_tutorials_support' => (bool)($athlete->academic_tutorials_support ?? false),
+                // Optional for debugging:
+                // 'events_count' => $events->count(),
+            ];
+        });
+
+        // ========== AUTO-GENERATED COACHES/SPORTS PERSONNEL DATA (FORM D) ==========
+        $coachesQuery = Coach::with(['sport']);
+        
+        if ($sport) $coachesQuery->where('sport_id', $sport);
+        
+        $coaches = $coachesQuery->get()->map(function($coach) {
+            // Calculate age from birth_date if available, otherwise use age field
+            if ($coach->birth_date) {
+                $age = Carbon::parse($coach->birth_date)->age;
+            } else {
+                $age = $coach->age ?? null;
+            }
+            
+            return (object) [
+                'coach_id' => $coach->coach_id,
+                'full_name' => $coach->full_name,
+                'age' => $age,
+                'gender' => $coach->gender,
+                'sport' => $coach->sport,
+                'position_title' => $coach->current_position_title ?? 'Coach',
+                'assigned_role' => $coach->sports_program_position ?? 'Coach',
+                'employment_status' => $coach->employment_status ?? 'Full-time',
+                'monthly_salary' => $coach->monthly_salary ?? 0,
+                'years_experience' => $coach->years_experience ?? 0,
+                'was_previous_athlete' => (bool)($coach->was_previous_athlete ?? false),
+                'highest_competition_level' => $coach->highest_competition_level ?? '-',
+                'highest_accomplishment_athlete' => $coach->highest_accomplishment_athlete ?? '-',
+                'international_competition_name_athlete' => $coach->international_competition_athlete ?? '-',
+                'highest_accomplishment_coach' => $coach->highest_accomplishment_coach ?? '-',
+                'international_competition_name_coach' => $coach->international_competition_coach ?? '-',
+                'regional_license' => (bool)($coach->regional_membership ?? false),
+                'national_license' => (bool)($coach->national_membership ?? false),
+                'international_license' => (bool)($coach->international_membership ?? false),
+                'international_license_name' => $coach->international_membership_name ?? '-',
+                'highest_degree' => $coach->highest_degree ?? '-',
+                'bachelors_program' => $coach->bachelor_degree ?? '-',
+                'masters_program' => $coach->master_degree ?? '-',
+                'doctorate_program' => $coach->doctorate_degree ?? '-',
+            ];
+        });
+
+        // ========== AUTO-GENERATED SPORTS PROGRAMS FROM EVENTS (FORM B) ==========
+        // First, get all sports with their events for the year
+        $sportsWithEvents = Sport::with(['events' => function($query) use ($year) {
+            $query->whereYear('event_date', $year);
+        }, 'coaches', 'athletes'])->get();
+        
+        // Get existing sports programs
+        $existingSportsPrograms = SportsProgram::with('sport')->get()->keyBy('sport_id');
+        
+        // Generate sports programs data
+        $sportsPrograms = $sportsWithEvents->map(function($sport) use ($year, $existingSportsPrograms) {
+            // Filter events for the selected year (in case eager loading didn't work properly)
+            $events = $sport->events->filter(function($event) use ($year) {
+                return Carbon::parse($event->event_date)->year == $year;
+            });
+            
+            $completedEvents = $events->where('status', 'Completed');
+            
+            // Count events by type for competition tracking
+            $scuaaEvents = $completedEvents->filter(function($event) {
+                return stripos($event->event_name, 'SCUAA') !== false;
+            });
+            $alcuaEvents = $completedEvents->filter(function($event) {
+                return stripos($event->event_name, 'ALCUA') !== false;
+            });
+            $prisaaEvents = $completedEvents->filter(function($event) {
+                return stripos($event->event_name, 'PRISAA') !== false;
+            });
+            $nationalGamesEvents = $completedEvents->filter(function($event) {
+                return stripos($event->event_name, 'Philippine National Games') !== false || 
+                       stripos($event->event_name, 'National Games') !== false;
+            });
+            
+            // Count training events for frequency
+            $trainingEvents = $events->where('event_type', 'Training');
+            $competitionEvents = $events->where('event_type', 'Competition');
+            
+            // Check for intramurals
+            $intramuralEvents = $events->filter(function($event) {
+                return stripos($event->event_name, 'Intramurals') !== false ||
+                       stripos($event->event_type, 'Intramurals') !== false;
+            });
+            
+            // Check coach training (assuming from events)
+            $coachTrainingEvents = $events->where('event_type', 'Meeting')
+                                         ->filter(function($event) {
+                                             return stripos($event->event_name, 'Coach') !== false ||
+                                                    stripos($event->event_name, 'Training') !== false;
+                                         });
+            
+            // Get existing program or create new object
+            $existingProgram = $existingSportsPrograms[$sport->sport_id] ?? null;
+            
+            // Determine category based on athletes gender distribution
+            $maleAthletes = $sport->athletes->where('gender', 'male')->count();
+            $femaleAthletes = $sport->athletes->where('gender', 'female')->count();
+            
+            $category = 'Mixed';
+            if ($maleAthletes > 0 && $femaleAthletes == 0) $category = 'Men';
+            if ($femaleAthletes > 0 && $maleAthletes == 0) $category = 'Women';
+            
+            // Auto-detect association participation
+            $assoc1 = $scuaaEvents->isNotEmpty() ? 'Yes' : 'No';
+            $assoc2 = $alcuaEvents->isNotEmpty() ? 'Yes' : 'No';
+            $assoc3a = $prisaaEvents->isNotEmpty() ? 'Yes' : 'No';
+            $assoc3b = $nationalGamesEvents->isNotEmpty() ? 'Yes' : 'No';
+            $leagueActive1 = $competitionEvents->isNotEmpty() ? 'Yes' : 'No';
+            $leagueCount1 = $competitionEvents->count();
+            $well1 = $intramuralEvents->isNotEmpty() ? 'Yes' : 'No';
+            $well3 = $trainingEvents->isNotEmpty() ? 'Yes' : 'No';
+            $cpd1 = $coachTrainingEvents->isNotEmpty() ? 'Yes' : 'No';
+            
+            // Use existing data if available, otherwise use auto-detected values
+            return (object) [
+                'id' => $existingProgram->id ?? null,
+                'sport_id' => $sport->sport_id,
+                'sport' => $sport,
+                'category' => $existingProgram->category ?? $category,
+                'assoc_1' => $existingProgram->assoc_1 ?? $assoc1,
+                'assoc_2' => $existingProgram->assoc_2 ?? $assoc2,
+                'assoc_3a' => $existingProgram->assoc_3a ?? $assoc3a,
+                'assoc_3b' => $existingProgram->assoc_3b ?? $assoc3b,
+                'assoc_other' => $existingProgram->assoc_other ?? '',
+                'league_active_1' => $existingProgram->league_active_1 ?? $leagueActive1,
+                'league_count_1' => $existingProgram->league_count_1 ?? $leagueCount1,
+                'league_active_2' => $existingProgram->league_active_2 ?? 'No',
+                'league_count_2' => $existingProgram->league_count_2 ?? 0,
+                'league_active_3' => $existingProgram->league_active_3 ?? 'No',
+                'league_count_3' => $existingProgram->league_count_3 ?? 0,
+                'league_active_4' => $existingProgram->league_active_4 ?? 'No',
+                'league_count_4' => $existingProgram->league_count_4 ?? 0,
+                'league_active_5' => $existingProgram->league_active_5 ?? 'No',
+                'league_count_5' => $existingProgram->league_count_5 ?? 0,
+                'well_1' => $existingProgram->well_1 ?? $well1,
+                'well_2' => $existingProgram->well_2 ?? 'No',
+                'well_3' => $existingProgram->well_3 ?? $well3,
+                'cpd_1' => $existingProgram->cpd_1 ?? $cpd1,
+                'cpd_2' => $existingProgram->cpd_2 ?? 'No',
+                'cpd_3' => $existingProgram->cpd_3 ?? 'No',
+                'cpd_4' => $existingProgram->cpd_4 ?? 'No',
+                'cpd_5' => $existingProgram->cpd_5 ?? 'No',
+                'cpd_6' => $existingProgram->cpd_6 ?? 'No',
+                'cpd_7' => $existingProgram->cpd_7 ?? 'No',
+            ];
+        });
 
         // Get institutional data
         $institutionalData = InstitutionalInformation::first() ?? new InstitutionalInformation();
-
-        // Fetch ALL sports programs from DB (remove toArray() to keep as Collection)
-        $sportsPrograms = SportsProgram::with('sport')->get();
 
         // Get budget and feedback
         $budgetData = BudgetExpenditure::first() ?? new BudgetExpenditure();
@@ -65,12 +284,64 @@ class ReportController extends Controller
             'coaches',
             'sports',
             'institutionalData',
-            'sportsPrograms', // This is now a Collection, not an array
+            'sportsPrograms',
             'budgetData',
             'feedbackData',
-            'nonVarsityClubs'
+            'nonVarsityClubs',
+            'year', // Pass year to view for display
+            'yearLevel', // Pass filters to view
+            'sport',
+            'status'
         ));
     }
+
+    // public function index(Request $request)
+    // {
+    //     $year = $request->get('year');
+    //     $yearLevel = $request->get('year_level');
+    //     $sport = $request->get('sport');
+    //     $status = $request->get('status');
+
+    //     // Get sports for filter dropdown and sport selection
+    //     $sports = Sport::all();
+
+    //     // Get athletes with filters
+    //     $athletesQuery = Athlete::with(['sport']);
+        
+    //     if ($year) $athletesQuery->where('academic_year', $year);
+    //     if ($yearLevel) $athletesQuery->where('year_level', $yearLevel);
+    //     if ($sport) $athletesQuery->where('sport_id', $sport);
+    //     if ($status) $athletesQuery->where('status', $status);
+        
+    //     $athletes = $athletesQuery->get();
+
+    //     // Get coaches
+    //     $coaches = Coach::with(['sport'])->get();
+
+    //     // Get institutional data
+    //     $institutionalData = InstitutionalInformation::first() ?? new InstitutionalInformation();
+
+    //     // Fetch ALL sports programs from DB (remove toArray() to keep as Collection)
+    //     $sportsPrograms = SportsProgram::with('sport')->get();
+
+    //     // Get budget and feedback
+    //     $budgetData = BudgetExpenditure::first() ?? new BudgetExpenditure();
+    //     $feedbackData = Feedback::first() ?? new Feedback();
+
+    //     // Get non-varsity clubs
+    //     $nonVarsityClubs = Sport::where('sport_type', 'non_varsity')->get();
+
+    //     return view('reports.index', compact(
+    //         'athletes',
+    //         'coaches',
+    //         'sports',
+    //         'institutionalData',
+    //         'sportsPrograms', // This is now a Collection, not an array
+    //         'budgetData',
+    //         'feedbackData',
+    //         'nonVarsityClubs'
+    //     ));
+    // }
 
 /**
  * Generate sports programs data from athletes information

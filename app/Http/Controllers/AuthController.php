@@ -224,7 +224,11 @@ class AuthController extends Controller
     // Helper function to notify all Super Admins
     protected function notifySuperAdmins($title, $message, $type = 'info')
     {
-        $superAdmins = User::where('role', 'SuperAdmin')->get();
+        $superAdmins = User::whereIn('role', [
+            'SuperAdmin',
+            'Staff',
+            'Admin'
+        ])->get();
 
         foreach ($superAdmins as $admin) {
             Notification::create([

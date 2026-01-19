@@ -8,7 +8,6 @@
 
     <!-- Filters -->
     <form method="GET" action="{{ route('reports') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <input type="number" name="year" value="{{ request('year') }}" placeholder="School Year" class="border p-2 rounded">
         <select name="year_level" class="border rounded px-3 py-2">
             <option value="">All Year Levels</option>
             @foreach(['1st Year','2nd Year','3rd Year','4th Year','Alumni'] as $level)
@@ -399,7 +398,10 @@
             <div class="flex">
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-green-800">CHED Form B: Sports Programs Report</h3>
-                    <p class="mt-2 text-sm text-green-700">Please fill out the following form according to the official CHED B1–B5 column structure.</p>
+                    <p class="mt-2 text-sm text-green-700">
+                        <strong>Auto-generated from events:</strong> This form shows sports programs based on actual completed events in your school.
+                        Data is automatically updated when new events are added.
+                    </p>
                 </div>
             </div>
         </div>
@@ -480,13 +482,15 @@
                         <tr class="bg-amber-700 text-white text-[10px]">
                             <th class="border p-2"></th>
                             <th class="border p-2">Input Guide</th>
-                            <th class="border p-2">Select Sport</th>
-                            <th class="border p-2">Men/Women/Mixed</th>
-                            <th class="border p-2">Yes/No</th>
-                            <th class="border p-2">Yes/No</th>
-                            <th class="border p-2">Yes/No</th>
-                            <th class="border p-2">Yes/No</th>
+                            <th class="border p-2">Auto-filled from Sports</th>
+                            <th class="border p-2">Auto-detected from Athletes</th>
+                            <th class="border p-2">Auto-detected from Events</th>
+                            <th class="border p-2">Auto-detected from Events</th>
+                            <th class="border p-2">Auto-detected from Events</th>
+                            <th class="border p-2">Auto-detected from Events</th>
                             <th class="border p-2">Input text (comma-separated)</th>
+                            <th class="border p-2">Auto-calculated from Events</th>
+                            <th class="border p-2">Auto-calculated from Events</th>
                             <th class="border p-2">Yes/No</th>
                             <th class="border p-2">Number</th>
                             <th class="border p-2">Yes/No</th>
@@ -495,12 +499,10 @@
                             <th class="border p-2">Number</th>
                             <th class="border p-2">Yes/No</th>
                             <th class="border p-2">Number</th>
+                            <th class="border p-2">Auto-detected from Events</th>
                             <th class="border p-2">Yes/No</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Yes/No</th>
-                            <th class="border p-2">Yes/No</th>
-                            <th class="border p-2">Yes/No</th>
-                            <th class="border p-2">Yes/No</th>
+                            <th class="border p-2">Auto-detected from Events</th>
+                            <th class="border p-2">Auto-detected from Events</th>
                             <th class="border p-2">Yes/No</th>
                             <th class="border p-2">Yes/No</th>
                             <th class="border p-2">Yes/No</th>
@@ -511,130 +513,136 @@
                     </thead>
 
                     <tbody x-ref="tbody">
-                        @foreach($sportsPrograms as $index => $sportsProgram)
-                            @php
-                                $sp = $sportsProgram->toArray();
-                                $sportId = $sportsProgram->sport_id ?? 'new_' . $index;
-                            @endphp
-                            <tr class="odd:bg-gray-50 even:bg-white hover:bg-yellow-50">
-                                <td class="border p-1">{{ $index + 1 }}</td>
+                        @foreach($sportsPrograms as $index => $program)
+                        <tr class="odd:bg-gray-50 even:bg-white hover:bg-yellow-50">
+                            <td class="border p-1">{{ $index + 1 }}</td>
 
-                                <!-- ITEM CODE -->
-                                <td class="border p-1">
-                                    {{ $sportsProgram->sport->sport_code ?? ('B1-SPORT-' . ($index+1)) }}
-                                </td>
+                            <!-- ITEM CODE -->
+                            <td class="border p-1">
+                                {{ 'B1-SPORT-' . ($index + 1) }}
+                            </td>
 
-                                <!-- B1-SPORTS-1: Sport selection -->
-                                <td class="border p-1">
-                                    <select name="sports_programs[{{ $index }}][sport_id]" class="w-full border rounded p-1 text-sm">
-                                        <option value="">Select Sport</option>
-                                        @foreach($sports as $sOpt)
-                                            <option value="{{ $sOpt->sport_id }}" 
-                                                {{ (int)old('sports_programs.' . $index . '.sport_id', $sportsProgram->sport_id) === (int)$sOpt->sport_id ? 'selected' : '' }}>
-                                                {{ $sOpt->sport_name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <!-- Hidden field to preserve ID for updates -->
-                                    <input type="hidden" name="sports_programs[{{ $index }}][id]" value="{{ $sportsProgram->id ?? '' }}">
-                                </td>
+                            <!-- B1-SPORTS-1: Sport selection (auto-filled) -->
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->sport->sport_name }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][sport_id]" value="{{ $program->sport_id }}">
+                                <input type="hidden" name="sports_programs[{{ $index }}][id]" value="{{ $program->id ?? '' }}">
+                            </td>
 
-                                <!-- B1-SPORTS-2: Category -->
-                                <td class="border p-1">
-                                    <select name="sports_programs[{{ $index }}][category]" class="w-full border rounded p-1 text-sm">
-                                        <option value="">Select</option>
-                                        <option value="Men" {{ old('sports_programs.' . $index . '.category', $sp['category'] ?? '') == 'Men' ? 'selected' : '' }}>Men</option>
-                                        <option value="Women" {{ old('sports_programs.' . $index . '.category', $sp['category'] ?? '') == 'Women' ? 'selected' : '' }}>Women</option>
-                                        <option value="Mixed" {{ old('sports_programs.' . $index . '.category', $sp['category'] ?? '') == 'Mixed' ? 'selected' : '' }}>Mixed</option>
-                                    </select>
-                                </td>
+                            <!-- B1-SPORTS-2: Category (auto-detected from athletes) -->
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->category }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][category]" value="{{ $program->category }}">
+                            </td>
 
-                                <!-- B2-ASSOC-1..B2-ASSOC-4 -->
-                                <td class="border p-1">
-                                    <select name="sports_programs[{{ $index }}][assoc_1]" class="w-full border rounded p-1 text-sm">
-                                        <option value="">Select</option>
-                                        <option value="Yes" {{ old('sports_programs.' . $index . '.assoc_1', $sp['assoc_1'] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ old('sports_programs.' . $index . '.assoc_1', $sp['assoc_1'] ?? '') == 'No' ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </td>
+                            <!-- B2-ASSOC fields (auto-detected from events) -->
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->assoc_1 }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][assoc_1]" value="{{ $program->assoc_1 }}">
+                            </td>
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->assoc_2 }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][assoc_2]" value="{{ $program->assoc_2 }}">
+                            </td>
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->assoc_3a }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][assoc_3a]" value="{{ $program->assoc_3a }}">
+                            </td>
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->assoc_3b }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][assoc_3b]" value="{{ $program->assoc_3b }}">
+                            </td>
 
-                                <td class="border p-1">
-                                    <select name="sports_programs[{{ $index }}][assoc_2]" class="w-full border rounded p-1 text-sm">
-                                        <option value="">Select</option>
-                                        <option value="Yes" {{ old('sports_programs.' . $index . '.assoc_2', $sp['assoc_2'] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ old('sports_programs.' . $index . '.assoc_2', $sp['assoc_2'] ?? '') == 'No' ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </td>
+                            <!-- B2-ASSOC-4: Other associations (editable) -->
+                            <td class="border p-1">
+                                <textarea name="sports_programs[{{ $index }}][assoc_other]" rows="2" class="w-full border rounded text-sm p-1">{{ $program->assoc_other }}</textarea>
+                            </td>
 
-                                <td class="border p-1">
-                                    <select name="sports_programs[{{ $index }}][assoc_3a]" class="w-full border rounded p-1 text-sm">
-                                        <option value="">Select</option>
-                                        <option value="Yes" {{ old('sports_programs.' . $index . '.assoc_3a', $sp['assoc_3a'] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ old('sports_programs.' . $index . '.assoc_3a', $sp['assoc_3a'] ?? '') == 'No' ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </td>
+                            <!-- B3-LEAGUE-1..10 -->
+                            @for($i = 1; $i <= 10; $i++)
+                                @php
+                                    $isActive = $i % 2 == 1;
+                                    $activeName = 'league_active_' . ceil($i/2);
+                                    $countName = 'league_count_' . ceil($i/2);
+                                    $activeValue = $program->$activeName ?? 'No';
+                                    $countValue = $program->$countName ?? 0;
+                                @endphp
 
-                                <td class="border p-1">
-                                    <select name="sports_programs[{{ $index }}][assoc_3b]" class="w-full border rounded p-1 text-sm">
-                                        <option value="">Select</option>
-                                        <option value="Yes" {{ old('sports_programs.' . $index . '.assoc_3b', $sp['assoc_3b'] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ old('sports_programs.' . $index . '.assoc_3b', $sp['assoc_3b'] ?? '') == 'No' ? 'selected' : '' }}>No</option>
-                                    </select>
-                                </td>
-
-                                <!-- B2-ASSOC-4: TEXT AREA -->
-                                <td class="border p-1">
-                                    <textarea name="sports_programs[{{ $index }}][assoc_other]" rows="2" class="w-full border rounded text-sm p-1" placeholder="e.g., Association 1, Association 2">{{ old('sports_programs.' . $index . '.assoc_other', $sp['assoc_other'] ?? '') }}</textarea>
-                                </td>
-
-                                <!-- B3-LEAGUE-1..10 -->
-                                @for($i = 1; $i <= 10; $i++)
-                                    @php
-                                        $isActive = $i % 2 == 1;
-                                        $activeName = 'league_active_' . ceil($i/2);
-                                        $countName = 'league_count_' . ceil($i/2);
-                                    @endphp
-
-                                    @if($isActive)
-                                        <td class="border p-1">
-                                            <select name="sports_programs[{{ $index }}][{{ $activeName }}]" class="w-full border rounded p-1 text-sm">
-                                                <option value="">Select</option>
-                                                <option value="Yes" {{ old('sports_programs.' . $index . '.' . $activeName, $sp[$activeName] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                                <option value="No" {{ old('sports_programs.' . $index . '.' . $activeName, $sp[$activeName] ?? '') == 'No' ? 'selected' : '' }}>No</option>
-                                            </select>
-                                        </td>
-                                    @else
-                                        <td class="border p-1">
-                                            <input type="number" min="0" name="sports_programs[{{ $index }}][{{ $countName }}]"
-                                                value="{{ old('sports_programs.' . $index . '.' . $countName, $sp[$countName] ?? '') }}"
-                                                class="w-20 border rounded text-center text-sm" />
-                                        </td>
-                                    @endif
-                                @endfor
-
-                                <!-- B4-WELL-1..3 -->
-                                @for($i = 1; $i <= 3; $i++)
-                                    <td class="border p-1">
-                                        <select name="sports_programs[{{ $index }}][well_{{ $i }}]" class="w-full border rounded p-1 text-sm">
-                                            <option value="">Select</option>
-                                            <option value="Yes" {{ old('sports_programs.' . $index . '.well_' . $i, $sp['well_' . $i] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                            <option value="No" {{ old('sports_programs.' . $index . '.well_' . $i, $sp['well_' . $i] ?? '') == 'No' ? 'selected' : '' }}>No</option>
-                                        </select>
+                                @if($isActive)
+                                    <td class="border p-1 bg-gray-100">
+                                        {{ $activeValue }}
+                                        <input type="hidden" name="sports_programs[{{ $index }}][{{ $activeName }}]" value="{{ $activeValue }}">
                                     </td>
-                                @endfor
-
-                                <!-- B5-CPD-1..7 -->
-                                @for($i = 1; $i <= 7; $i++)
-                                    <td class="border p-1">
-                                        <select name="sports_programs[{{ $index }}][cpd_{{ $i }}]" class="w-full border rounded p-1 text-sm">
-                                            <option value="">Select</option>
-                                            <option value="Yes" {{ old('sports_programs.' . $index . '.cpd_' . $i, $sp['cpd_' . $i] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                            <option value="No" {{ old('sports_programs.' . $index . '.cpd_' . $i, $sp['cpd_' . $i] ?? '') == 'No' ? 'selected' : '' }}>No</option>
-                                        </select>
+                                @else
+                                    <td class="border p-1 bg-gray-100">
+                                        {{ $countValue }}
+                                        <input type="hidden" name="sports_programs[{{ $index }}][{{ $countName }}]" value="{{ $countValue }}">
                                     </td>
-                                @endfor
+                                @endif
+                            @endfor
 
-                            </tr>
+                            <!-- B4-WELL-1..3 (auto-detected from events) -->
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->well_1 }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][well_1]" value="{{ $program->well_1 }}">
+                            </td>
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->well_2 }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][well_2]" value="{{ $program->well_2 }}">
+                            </td>
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->well_3 }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][well_3]" value="{{ $program->well_3 }}">
+                            </td>
+
+                            <!-- B5-CPD-1..7 (auto-detected from events) -->
+                            <td class="border p-1 bg-gray-100">
+                                {{ $program->cpd_1 }}
+                                <input type="hidden" name="sports_programs[{{ $index }}][cpd_1]" value="{{ $program->cpd_1 }}">
+                            </td>
+                            <td class="border p-1">
+                                <select name="sports_programs[{{ $index }}][cpd_2]" class="w-full border rounded p-1 text-sm">
+                                    <option value="">Select</option>
+                                    <option value="Yes" {{ $program->cpd_2 == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No" {{ $program->cpd_2 == 'No' ? 'selected' : '' }}>No</option>
+                                </select>
+                            </td>
+                            <td class="border p-1">
+                                <select name="sports_programs[{{ $index }}][cpd_3]" class="w-full border rounded p-1 text-sm">
+                                    <option value="">Select</option>
+                                    <option value="Yes" {{ $program->cpd_3 == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No" {{ $program->cpd_3 == 'No' ? 'selected' : '' }}>No</option>
+                                </select>
+                            </td>
+                            <td class="border p-1">
+                                <select name="sports_programs[{{ $index }}][cpd_4]" class="w-full border rounded p-1 text-sm">
+                                    <option value="">Select</option>
+                                    <option value="Yes" {{ $program->cpd_4 == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No" {{ $program->cpd_4 == 'No' ? 'selected' : '' }}>No</option>
+                                </select>
+                            </td>
+                            <td class="border p-1">
+                                <select name="sports_programs[{{ $index }}][cpd_5]" class="w-full border rounded p-1 text-sm">
+                                    <option value="">Select</option>
+                                    <option value="Yes" {{ $program->cpd_5 == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No" {{ $program->cpd_5 == 'No' ? 'selected' : '' }}>No</option>
+                                </select>
+                            </td>
+                            <td class="border p-1">
+                                <select name="sports_programs[{{ $index }}][cpd_6]" class="w-full border rounded p-1 text-sm">
+                                    <option value="">Select</option>
+                                    <option value="Yes" {{ $program->cpd_6 == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No" {{ $program->cpd_6 == 'No' ? 'selected' : '' }}>No</option>
+                                </select>
+                            </td>
+                            <td class="border p-1">
+                                <select name="sports_programs[{{ $index }}][cpd_7]" class="w-full border rounded p-1 text-sm">
+                                    <option value="">Select</option>
+                                    <option value="Yes" {{ $program->cpd_7 == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No" {{ $program->cpd_7 == 'No' ? 'selected' : '' }}>No</option>
+                                </select>
+                            </td>
+                        </tr>
                         @endforeach
                     </tbody>
                 </table>
@@ -813,7 +821,11 @@
             <div class="flex">
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-blue-800">CHED Form C: Profile and Benefits of Student-Athletes</h3>
-                    <p class="mt-2 text-sm text-blue-700">This form displays student-athlete profiles and benefits information. The C2-BEN fields are editable for updates.</p>
+                    <p class="mt-2 text-sm text-blue-700">
+                        <strong>Auto-generated from athletes:</strong> Athlete profiles are automatically loaded from your database.
+                        Competition levels and training frequency are calculated from their actual events.
+                        The C2-BEN fields are editable for updates.
+                    </p>
                 </div>
             </div>
         </div>
@@ -911,25 +923,25 @@
                         <!-- INPUT GUIDE ROW -->
                         <tr class="bg-blue-700 text-white text-[10px]">
                             <th class="border p-2">Input Guide</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Select Yes/No</th>
-                            <th class="border p-2">Select Yes/No</th>
-                            <th class="border p-2">Select Yes/No</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Select from List</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-calculated</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-calculated from Events</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-calculated from Events</th>
+                            <th class="border p-2">Auto-calculated from Events</th>
                             <th class="border p-2">Select from List</th>
                             <th class="border p-2">Number</th>
+                            <th class="border p-2">Select from List</th>
+                            <th class="border p-2">Select from List</th>
+                            <th class="border p-2">Select from List</th>
+                            <th class="border p-2">Auto-calculated from Events</th>
                             <th class="border p-2">Select from List</th>
                             <th class="border p-2">Select from List</th>
                             <th class="border p-2">Select Yes/No</th>
@@ -944,10 +956,10 @@
                                 <!-- ITEM CODE (Row Number) -->
                                 <td class="border p-1">{{ $index + 1 }}</td>
 
-                                <!-- C1-PROF FIELDS (Non-editable) -->
+                                <!-- C1-PROF FIELDS (Auto-generated) -->
                                 <td class="border p-1 bg-gray-100">{{ $athlete->full_name }}</td>
                                 <td class="border p-1 bg-gray-100">{{ $athlete->age }}</td>
-                                <td class="border p-1 bg-gray-100">{{ optional($athlete->sport)->sport_name }}</td>
+                                <td class="border p-1 bg-gray-100">{{ $athlete->sport->sport_name ?? '-' }}</td>
                                 <td class="border p-1 bg-gray-100">{{ ucfirst($athlete->gender) }}</td>
                                 <td class="border p-1 bg-gray-100">{{ $athlete->academic_course }}</td>
                                 <td class="border p-1 bg-gray-100">{{ $athlete->highest_competition_level }}</td>
@@ -976,25 +988,25 @@
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][board_lodging_support]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->board_lodging_support == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->board_lodging_support == 'No' ? 'selected' : '' }}>No</option>
-                                        <option value="Partial Subsidy" {{ $athlete->board_lodging_support == 'Partial Subsidy' ? 'selected' : '' }}>Partial Subsidy</option>
+                                        <option value="Yes" {{ $athlete->board_lodging_support ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->board_lodging_support ? 'selected' : '' }}>No</option>
+                                        <option value="Partial Subsidy" {{ $athlete->board_lodging_support === 'Partial' ? 'selected' : '' }}>Partial Subsidy</option>
                                     </select>
                                 </td>
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][medical_insurance_support]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->medical_insurance_support == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->medical_insurance_support == 'No' ? 'selected' : '' }}>No</option>
-                                        <option value="Partial Subsidy" {{ $athlete->medical_insurance_support == 'Partial Subsidy' ? 'selected' : '' }}>Partial Subsidy</option>
+                                        <option value="Yes" {{ $athlete->medical_insurance_support ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->medical_insurance_support ? 'selected' : '' }}>No</option>
+                                        <option value="Partial Subsidy" {{ $athlete->medical_insurance_support === 'Partial' ? 'selected' : '' }}>Partial Subsidy</option>
                                     </select>
                                 </td>
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][training_uniforms_support]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->training_uniforms_support == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->training_uniforms_support == 'No' ? 'selected' : '' }}>No</option>
-                                        <option value="Partial Subsidy" {{ $athlete->training_uniforms_support == 'Partial Subsidy' ? 'selected' : '' }}>Partial Subsidy</option>
+                                        <option value="Yes" {{ $athlete->training_uniforms_support ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->training_uniforms_support ? 'selected' : '' }}>No</option>
+                                        <option value="Partial Subsidy" {{ $athlete->training_uniforms_support === 'Partial' ? 'selected' : '' }}>Partial Subsidy</option>
                                     </select>
                                 </td>
                                 <td class="border p-1">
@@ -1005,38 +1017,38 @@
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][playing_uniforms_sponsorship]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->playing_uniforms_sponsorship == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->playing_uniforms_sponsorship == 'No' ? 'selected' : '' }}>No</option>
-                                        <option value="Partial Subsidy" {{ $athlete->playing_uniforms_sponsorship == 'Partial Subsidy' ? 'selected' : '' }}>Partial Subsidy</option>
+                                        <option value="Yes" {{ $athlete->playing_uniforms_sponsorship ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->playing_uniforms_sponsorship ? 'selected' : '' }}>No</option>
+                                        <option value="Partial Subsidy" {{ $athlete->playing_uniforms_sponsorship === 'Partial' ? 'selected' : '' }}>Partial Subsidy</option>
                                     </select>
                                 </td>
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][playing_gears_sponsorship]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->playing_gears_sponsorship == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->playing_gears_sponsorship == 'No' ? 'selected' : '' }}>No</option>
-                                        <option value="Partial Subsidy" {{ $athlete->playing_gears_sponsorship == 'Partial Subsidy' ? 'selected' : '' }}>Partial Subsidy</option>
+                                        <option value="Yes" {{ $athlete->playing_gears_sponsorship ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->playing_gears_sponsorship ? 'selected' : '' }}>No</option>
+                                        <option value="Partial Subsidy" {{ $athlete->playing_gears_sponsorship === 'Partial' ? 'selected' : '' }}>Partial Subsidy</option>
                                     </select>
                                 </td>
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][excused_from_academic_obligations]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->excused_from_academic_obligations == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->excused_from_academic_obligations == 'No' ? 'selected' : '' }}>No</option>
+                                        <option value="Yes" {{ $athlete->excused_from_academic_obligations ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->excused_from_academic_obligations ? 'selected' : '' }}>No</option>
                                     </select>
                                 </td>
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][flexible_academic_schedule]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->flexible_academic_schedule == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->flexible_academic_schedule == 'No' ? 'selected' : '' }}>No</option>
+                                        <option value="Yes" {{ $athlete->flexible_academic_schedule ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->flexible_academic_schedule ? 'selected' : '' }}>No</option>
                                     </select>
                                 </td>
                                 <td class="border p-1">
                                     <select name="athletes[{{ $athlete->athlete_id }}][academic_tutorials_support]" class="w-full border rounded p-1 text-sm">
                                         <option value="">-- Select --</option>
-                                        <option value="Yes" {{ $athlete->academic_tutorials_support == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                        <option value="No" {{ $athlete->academic_tutorials_support == 'No' ? 'selected' : '' }}>No</option>
+                                        <option value="Yes" {{ $athlete->academic_tutorials_support ? 'selected' : '' }}>Yes</option>
+                                        <option value="No" {{ !$athlete->academic_tutorials_support ? 'selected' : '' }}>No</option>
                                     </select>
                                 </td>
                             </tr>
@@ -1045,8 +1057,10 @@
                 </table>
             </div>
 
-            <!-- Add Row Button and Total Records -->
             <!-- Save Button -->
+            <div class="mt-4 text-right">
+                <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2 rounded shadow">Save CHED Form C Report</button>
+            </div>
             <!-- Add this after the save button in Form C section -->
             <div class="mt-4 flex justify-end space-x-4">
                 <a href="{{ route('reports.export-form', ['form' => 'C', 'format' => 'pdf']) }}" 
@@ -1263,7 +1277,10 @@
             <div class="flex">
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-purple-800">CHED Form D: Sports Personnel Report</h3>
-                    <p class="mt-2 text-sm text-purple-700">Please review the following sports personnel information.</p>
+                    <p class="mt-2 text-sm text-purple-700">
+                        <strong>Auto-generated from coaches:</strong> All coach information is automatically loaded from your database.
+                        Updates immediately when coaches are added, removed, or their information changes.
+                    </p>
                 </div>
             </div>
         </div>
@@ -1353,29 +1370,29 @@
                         <tr class="bg-purple-700 text-white text-[10px]">
                             <th class="border p-2">Input Guide</th>
                             <th class="border p-2"></th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Male, Female</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">D1-PROFILE-7</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Number</th>
-                            <th class="border p-2">Select Yes/No</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Select Yes/No</th>
-                            <th class="border p-2">Select Yes/No</th>
-                            <th class="border p-2">Select Yes/No</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Select from List</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Text</th>
-                            <th class="border p-2">Text</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
+                            <th class="border p-2">Auto-filled from Database</th>
                         </tr>
                     </thead>
 
@@ -1388,7 +1405,7 @@
                             <!-- ITEM CODE (Coach ID or generated code) -->
                             <td class="border p-1">{{ 'D-PERS-' . ($index + 1) }}</td>
 
-                            <!-- D1-PROFILE FIELDS -->
+                            <!-- D1-PROFILE FIELDS (Auto-generated from coaches table) -->
                             <td class="border p-1 bg-gray-100">{{ $coach->full_name }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->age ?? '-' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->gender ?? '-' }}</td>
@@ -1412,7 +1429,7 @@
                             </td>
                             <td class="border p-1 bg-gray-100">{{ $coach->years_experience ?? '-' }}</td>
 
-                            <!-- D2-EXP FIELDS -->
+                            <!-- D2-EXP FIELDS (Auto-generated from coaches table) -->
                             <td class="border p-1 bg-gray-100">{{ $coach->was_previous_athlete ? 'Yes' : 'No' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->highest_competition_level ?? '-' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->highest_accomplishment_athlete ?? '-' }}</td>
@@ -1420,13 +1437,13 @@
                             <td class="border p-1 bg-gray-100">{{ $coach->highest_accomplishment_coach ?? '-' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->international_competition_name_coach ?? '-' }}</td>
 
-                            <!-- D3-LIC FIELDS -->
+                            <!-- D3-LIC FIELDS (Auto-generated from coaches table) -->
                             <td class="border p-1 bg-gray-100">{{ $coach->regional_license ? 'Yes' : 'No' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->national_license ? 'Yes' : 'No' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->international_license ? 'Yes' : 'No' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->international_license_name ?? '-' }}</td>
 
-                            <!-- D4-EDUC FIELDS -->
+                            <!-- D4-EDUC FIELDS (Auto-generated from coaches table) -->
                             <td class="border p-1 bg-gray-100">{{ $coach->highest_degree ?? '-' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->bachelors_program ?? '-' }}</td>
                             <td class="border p-1 bg-gray-100">{{ $coach->masters_program ?? '-' }}</td>
@@ -2304,40 +2321,9 @@ function initializeBudgetCalculations() {
     }
 }
 
-// Only run benefits table code if the benefits table exists
-function initializeBenefitsTable() {
-    const benefitsTable = document.querySelector('#benefitsTable');
-    
-    if (benefitsTable) {
-        benefitsTable.addEventListener('change', e => {
-            if (!e.target.classList.contains('benefit-field')) return;
-            const row = e.target.closest('tr');
-            
-            if (!row || !row.dataset.id) return;
-            
-            fetch("{{ route('reports.save-benefits') }}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    athlete_id: row.dataset.id,
-                    field: e.target.name,
-                    value: e.target.value
-                })
-            })
-            .then(res => res.json())
-            .then(data => console.log('Saved successfully:', data))
-            .catch(err => console.error('Save failed:', err));
-        });
-    }
-}
-
 // Initialize everything when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeBudgetCalculations();
-    initializeBenefitsTable();
 });
 </script>
 @endsection
