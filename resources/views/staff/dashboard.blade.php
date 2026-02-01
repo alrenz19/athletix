@@ -56,7 +56,7 @@
 
   <a href="{{ url('/staff/athletes') }}">
     <div class="bg-green-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
-      <h3 class="text-center font-bold">ATHLETES23</h3>
+      <h3 class="text-center font-bold">ATHLETES</h3>
       <p class="text-3xl text-center font-bold">{{ $athleteCount }}</p>
     </div>
   </a>
@@ -77,7 +77,7 @@
 
   <a href="{{ url('/staff/registration-approval') }}">
     <div class="bg-red-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
-      <h3 class="text-center font-bold">PENDING APPROVAL</h3>
+      <h3 class="text-center font-bold">PENDING</h3>
       <p class="text-3xl text-center font-bold">{{ $PendingRegistrationCount }}</p>
     </div>
   </a>

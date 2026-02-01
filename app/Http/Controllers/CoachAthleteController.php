@@ -135,11 +135,11 @@ public function show(Athlete $athlete)
         } else {
             // superAdmin - find coach for this sport
             $coachForSport = Coach::where('sport_id', $athlete->sport_id)->first();
-            $coachId = $coachForSport ? $coachForSport->coach_id : null;
+            $coachId = $coachForSport ? $coachForSport->coach_id : $user->coach->coach_id;
         }
 
         TrainingNote::create([
-            'coach_id' => $coachId,
+            'coach_id' => $coachId ? $coachId : 1,
             'athlete_id' => $athlete->athlete_id,
             'note' => $request->note,
         ]);
