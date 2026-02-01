@@ -32,7 +32,7 @@
           <span class="font-semibold">{{ $donutData['events'] }}</span>
         </div>
         <div class="flex justify-between gap-6">
-          <span><span class="w-3 h-3 bg-red-500 inline-block mr-2 rounded-full"></span>Attendance</span>
+          <span><span class="w-3 h-3 bg-red-500 inline-block mr-2 rounded-full"></span>Pending</span>
           <span class="font-semibold">{{ $donutData['pendings'] }}</span>
         </div>
       </div>
@@ -98,10 +98,16 @@ const insidePercentagePlugin = {
     const dataset = chart.data.datasets[0];
     const total = dataset.data.reduce((a, b) => a + b, 0);
 
+    // If total is 0, don't show any percentages
+    if (total === 0) return;
+
     chart.getDatasetMeta(0).data.forEach((el, i) => {
-      const percent = total
-        ? ((dataset.data[i] / total) * 100).toFixed(1) + '%'
-        : '0%';
+      const value = dataset.data[i];
+      
+      // Only show percentage if value is greater than 0
+      if (value <= 0) return;
+      
+      const percent = ((value / total) * 100).toFixed(1) + '%';
 
       let x, y;
 
@@ -145,7 +151,23 @@ new Chart(document.getElementById('donutChart'), {
     }]
   },
   options: {
-    plugins: { legend: { display: false } }
+    plugins: { 
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            
+            if (total === 0) return `${label}: ${value}`;
+            
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    }
   },
   plugins: [insidePercentagePlugin]
 });
@@ -167,9 +189,32 @@ new Chart(document.getElementById('barChart'), {
     }]
   },
   options: {
-    plugins: { legend: { display: false } },
+    plugins: { 
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            
+            if (total === 0) return `${label}: ${value}`;
+            
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    },
     scales: {
-      y: { beginAtZero: true }
+      y: { 
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return value;
+          }
+        }
+      }
     }
   },
   plugins: [insidePercentagePlugin]
