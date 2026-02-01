@@ -24,7 +24,7 @@
           <span class="font-semibold">{{ $donutData['athletes'] }}</span>
         </div>
         <div class="flex justify-between gap-6">
-          <span><span class="w-3 h-3 bg-yellow-500 inline-block mr-2 rounded-full"></span>Performance</span>
+          <span><span class="w-3 h-3 bg-yellow-500 inline-block mr-2 rounded-full"></span>announce..</span>
           <span class="font-semibold">{{ $donutData['announcement'] }}</span>
         </div>
         <div class="flex justify-between gap-6">
@@ -63,7 +63,7 @@
 
   <a href="{{ url('/announcements') }}">
     <div class="bg-yellow-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
-      <h3 class="text-center font-bold">ANNOUNCEMNETS</h3>
+      <h3 class="text-center font-bold">ANNOUNCE..</h3>
       <p class="text-3xl text-center font-bold">{{ $notificationsCount }}</p>
     </div>
   </a>
