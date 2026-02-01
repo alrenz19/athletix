@@ -16,6 +16,7 @@ class Attendance extends Model
         'event_id',
         'status',
         'removed',
+        'event_date'
     ];
 
     // Relationships

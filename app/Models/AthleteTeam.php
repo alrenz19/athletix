@@ -22,8 +22,10 @@ class AthleteTeam extends Model
         return $this->belongsTo(Athlete::class, 'athlete_id', 'athlete_id');
     }
 
+
     public function team()
     {
-        return $this->belongsTo(Team::class, 'team_id', 'id');
+        // Use 'team_id' as the foreign key since that's the primary key in teams table
+        return $this->belongsTo(Team::class, 'team_id', 'team_id');
     }
 }

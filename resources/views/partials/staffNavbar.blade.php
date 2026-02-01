@@ -119,7 +119,7 @@
                     d="M19.4 15a1.65 1.65 0 010 2l1.1 1.7a.5.5 0 01-.2.7l-2 .6a5.4 5.4 0 01-1.2.7l-.4 2.1a.5.5 0 01-.5.4h-2.4a.5.5 0 01-.5-.4l-.4-2.1a5.4 5.4 0 01-1.2-.7l-2-.6a.5.5 0 01-.2-.7l1.1-1.7a1.65 1.65 0 010-2l-1.1-1.7a.5.5 0 01.2-.7l2-.6a5.4 5.4 0 011.2-.7l.4-2.1a.5.5 0 01.5-.4h2.4a.5.5 0 01.5.4l.4 2.1a5.4 5.4 0 011.2.7l2 .6a.5.5 0 01.2.7L19.4 15z" />
           </svg>
 
-          @if (request()->routeIs('staff.athletes.index'))
+          @if (request()->routeIs(['staff.athletes.index', 'coach.athletes.show']))
               <div class="absolute right-[-8px] top-0 h-full w-1 bg-white rounded-l"></div>
           @endif
       </a>

@@ -34,8 +34,11 @@
                             onkeyup="checkPasswordStrength()">
                         <button type="button" onclick="togglePasswordVisibility('password', 'passwordToggle')" 
                                 id="passwordToggle" 
-                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
-                            👁️
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                            </svg>
                         </button>
                     </div>
                     @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -78,8 +81,11 @@
                             onkeyup="checkPasswordMatch()">
                         <button type="button" onclick="togglePasswordVisibility('passwordConfirmation', 'confirmToggle')" 
                                 id="confirmToggle" 
-                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
-                            👁️
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                            </svg>
                         </button>
                     </div>
                     <div id="passwordMatchMessage" class="text-sm mt-1"></div>
@@ -100,23 +106,90 @@
                 <!-- Profile Image -->
                 <div class="md:col-span-2 mb-3">
                     <label for="profile_image" class="block text-gray-700 mb-2">Profile Image</label>
-                    @if(isset($athlete) && $athlete->profile_url)
-                        <img id="preview" src="{{ $athlete->profile_url }}" alt="{{ $athlete->full_name }}" width="100" height="100" class="mb-2 rounded">
-                    @else
-                        <img id="preview" src="{{ asset('storage/'.$athlete?->profile_image) }}" alt="Profile Image" width="100" height="100" class="mb-2 rounded">
-                    @endif
-                    <input type="file" name="profile_image" id="profile_image" class="form-control mt-2" accept="image/*" onchange="previewImage(event)">
+                    
+                    <div id="currentImageContainer" class="mb-4">
+                        @php
+                            $hasImage = false;
+                            $imageUrl = '';
+                            
+                            if (isset($athlete) && $athlete->profile_url) {
+                                $hasImage = true;
+                                $imageUrl = $athlete->profile_url;
+                            } elseif (isset($athlete) && $athlete->profile_image) {
+                                $hasImage = true;
+                                $imageUrl = asset('storage/'.$athlete->profile_image);
+                            }
+                        @endphp
+                        
+                        @if($hasImage)
+                            <div class="relative inline-block">
+                                <img id="currentImage" src="{{ $imageUrl }}" alt="Current Profile Image" 
+                                     class="w-32 h-32 object-cover rounded-lg border-2 border-gray-300">
+                                <div class="mt-2 text-sm text-gray-600">
+                                    Current profile image
+                                </div>
+                            </div>
+                        @else
+                            <div class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <span class="text-gray-500">No profile image</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- New Image Upload -->
+                    <div class="mt-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors duration-200">
+                            <div id="uploadArea" class="cursor-pointer">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-600">Click to upload a new profile image</p>
+                                <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, JPEG, PNG, WEBP (Max: 2MB)</p>
+                                <input type="file" name="profile_image" id="profile_image" 
+                                       class="hidden" 
+                                       accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                       onchange="validateAndPreviewImage(this)">
+                            </div>
+                        </div>
+                        
+                        <!-- Error Message -->
+                        <div id="imageError" class="text-red-500 text-sm mt-2 hidden"></div>
+                        
+                        <!-- Preview Container -->
+                        <div id="imagePreviewContainer" class="mt-4 hidden">
+                            <p class="text-sm text-gray-700 mb-2">New Image Preview:</p>
+                            <div class="relative inline-block">
+                                <img id="imagePreview" src="" alt="Image Preview" 
+                                     class="w-32 h-32 object-cover rounded-lg border-2 border-blue-500">
+                                <button type="button" onclick="removeImagePreview()" 
+                                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @error('profile_image') 
+                        <span class="text-red-500 text-sm">{{ $message }}</span> 
+                    @enderror
                 </div>
 
                 <div>
                     <label class="block text-gray-700 mb-2">Birthdate</label>
-                    <input type="date" name="birthdate" value="{{ old('birthdate', $athlete?->birthdate) }}" class="w-full border rounded p-2">
+                    <input type="date" name="birthdate" id="birthdate" 
+                           value="{{ old('birthdate', $athlete?->birthdate) }}" 
+                           class="w-full border rounded p-2"
+                           onchange="calculateAge()">
                     @error('birthdate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="block text-gray-700 mb-2">Age</label>
-                    <input type="number" name="age" value="{{ old('age', $athlete?->age) }}" class="w-full border rounded p-2" min="15" max="40">
+                    <input type="number" name="age" id="age" 
+                           value="{{ old('age', $athlete?->age) }}" 
+                           class="w-full border rounded p-2 bg-gray-50" 
+                           readonly>
                     @error('age') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    <p class="text-xs text-gray-500 mt-1">Automatically calculated from birthdate</p>
                 </div>
                 <div>
                     <label class="block text-gray-700 mb-2">Gender</label>
@@ -130,7 +203,7 @@
                 </div>
                 <div>
                     <label class="block text-gray-700 mb-2">School ID</label>
-                    <input type="text" name="school_id" value="{{ old('school_id', $athlete?->school_id) }}" class="w-full border rounded p-2">
+                    <input type="text" readonly name="school_id" value="{{ old('school_id', $athlete?->school_id) }}" class="w-full border rounded p-2">
                     @error('school_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>
             </div>
@@ -156,18 +229,6 @@
                     <label class="block text-gray-700 mb-2">Academic Course</label>
                     <input type="text" name="academic_course" value="{{ old('academic_course', $athlete?->academic_course) }}" class="w-full border rounded p-2" placeholder="e.g., BS Computer Science">
                     @error('academic_course') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-gray-700 mb-2">Section</label>
-                    <select name="section_id" class="w-full border rounded p-2">
-                        <option value="">Select Section</option>
-                        @foreach($sections as $section)
-                            <option value="{{ $section->section_id }}" {{ old('section_id', $athlete?->section_id) == $section->section_id ? 'selected' : '' }}>
-                                {{ $section->section_name }} - {{ $section->course->course_name ?? '' }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('section_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>
             </div>
         </div>
@@ -241,7 +302,7 @@
 
         <!-- Submit Button -->
         <div class="flex justify-end">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            <button type="submit" id="submitButton" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                 Save Changes
             </button>
         </div>
@@ -369,26 +430,171 @@ function togglePasswordVisibility(inputId, buttonId) {
     const input = document.getElementById(inputId);
     const button = document.getElementById(buttonId);
     
-    if (input.type === 'password') {
-        input.type = 'text';
-        button.textContent = '🙈';
-    } else {
-        input.type = 'password';
-        button.textContent = '👁️';
+    if (input && button) {
+        if (input.type === 'password') {
+            input.type = 'text';
+            // Change to eye-slash icon
+            button.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                </svg>
+            `;
+        } else {
+            input.type = 'password';
+            // Change back to eye icon
+            button.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                </svg>
+            `;
+        }
     }
 }
 
-// Image preview function
-function previewImage(event) {
-    const output = document.getElementById('preview');
-    output.src = URL.createObjectURL(event.target.files[0]);
-    output.onload = () => URL.revokeObjectURL(output.src); // free memory
+// Calculate age from birthdate
+function calculateAge() {
+    const birthdateInput = document.getElementById('birthdate');
+    const ageInput = document.getElementById('age');
+    
+    if (!birthdateInput.value) {
+        ageInput.value = '';
+        return;
+    }
+    
+    const birthDate = new Date(birthdateInput.value);
+    const today = new Date();
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    // If birthday hasn't occurred yet this year, subtract 1
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    
+    // Validate age range (15-40 as per original min/max attributes)
+    if (age < 15) {
+        ageInput.value = '';
+        alert('Athlete must be at least 15 years old');
+        birthdateInput.focus();
+        birthdateInput.value = '';
+        return;
+    }
+    
+    if (age > 40) {
+        ageInput.value = '';
+        alert('Athlete must be 40 years old or younger');
+        birthdateInput.focus();
+        birthdateInput.value = '';
+        return;
+    }
+    
+    ageInput.value = age;
 }
+
+// Image upload validation and preview
+function validateAndPreviewImage(input) {
+    const file = input.files[0];
+    const errorElement = document.getElementById('imageError');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewImage = document.getElementById('imagePreview');
+    const uploadArea = document.getElementById('uploadArea');
+    const submitButton = document.getElementById('submitButton');
+    
+    // Reset states
+    errorElement.classList.add('hidden');
+    errorElement.textContent = '';
+    uploadArea.classList.remove('border-red-500');
+    
+    if (!file) {
+        previewContainer.classList.add('hidden');
+        return;
+    }
+    
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        errorElement.textContent = 'Invalid file type. Please upload only JPG, JPEG, PNG, or WEBP images.';
+        errorElement.classList.remove('hidden');
+        uploadArea.classList.add('border-red-500');
+        input.value = '';
+        previewContainer.classList.add('hidden');
+        submitButton.disabled = true;
+        return;
+    }
+    
+    // Check file size (2MB max - matching controller validation)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+        errorElement.textContent = 'File size too large. Maximum size is 2MB.';
+        errorElement.classList.remove('hidden');
+        uploadArea.classList.add('border-red-500');
+        input.value = '';
+        previewContainer.classList.add('hidden');
+        submitButton.disabled = true;
+        return;
+    }
+    
+    // Valid file - show preview
+    errorElement.classList.add('hidden');
+    uploadArea.classList.remove('border-red-500');
+    submitButton.disabled = false;
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        previewImage.src = e.target.result;
+        previewContainer.classList.remove('hidden');
+    }
+    reader.readAsDataURL(file);
+}
+
+function removeImagePreview() {
+    const input = document.getElementById('profile_image');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const errorElement = document.getElementById('imageError');
+    
+    input.value = '';
+    previewContainer.classList.add('hidden');
+    errorElement.classList.add('hidden');
+}
+
+// Make upload area clickable
+document.getElementById('uploadArea').addEventListener('click', function() {
+    document.getElementById('profile_image').click();
+});
 
 // Add form validation
 document.getElementById('athleteProfileForm').addEventListener('submit', function(event) {
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('passwordConfirmation').value;
+    
+    // Check file input if there's a file selected
+    const fileInput = document.getElementById('profile_image');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        const maxSize = 2 * 1024 * 1024;
+        
+        if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+            event.preventDefault();
+            alert('Invalid file type. Please upload only JPG, JPEG, PNG, or WEBP images.');
+            return false;
+        }
+        
+        if (file.size > maxSize) {
+            event.preventDefault();
+            alert('File size too large. Maximum size is 2MB.');
+            return false;
+        }
+    }
     
     // Only validate if password is being changed
     if (password) {
@@ -414,6 +620,19 @@ document.getElementById('athleteProfileForm').addEventListener('submit', functio
 document.addEventListener('DOMContentLoaded', function() {
     checkPasswordStrength();
     checkPasswordMatch();
+    
+    // Calculate age if birthdate is already set
+    const birthdateInput = document.getElementById('birthdate');
+    if (birthdateInput && birthdateInput.value) {
+        calculateAge();
+    }
+    
+    // Also trigger calculation when the form is loaded with old input
+    if (birthdateInput && birthdateInput.value) {
+        setTimeout(() => {
+            calculateAge();
+        }, 100);
+    }
 });
 </script>
 
@@ -433,11 +652,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
-#preview {
+/* Image preview styling */
+#imagePreview {
     max-width: 150px;
     max-height: 150px;
     object-fit: cover;
-    border-radius: 8px;
+}
+
+/* Upload area hover effect */
+#uploadArea:hover {
+    background-color: #f9fafb;
+}
+
+/* Age field styling to indicate it's read-only */
+#age {
+    background-color: #f9fafb;
+    cursor: not-allowed;
 }
 </style>
 @endsection

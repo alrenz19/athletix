@@ -166,28 +166,6 @@ class ControlPanelController extends Controller
         return redirect()->back()->with('success', 'Team has been removed.');
     }
 
-    public function backupDatabase()
-    {
-        $filename = 'backup-' . date('Y-m-d_H-i-s') . '.sql';
-        $path = storage_path('app/backups/' . $filename);
-
-        if (!file_exists(storage_path('app/backups'))) {
-            mkdir(storage_path('app/backups'), 0755, true);
-        }
-
-        $dbHost = env('DB_HOST');
-        $dbName = env('DB_DATABASE');
-        $dbUser = env('DB_USERNAME');
-        $dbPass = env('DB_PASSWORD');
-
-        $command = "mysqldump -h {$dbHost} -u {$dbUser} -p{$dbPass} {$dbName} > {$path}";
-        exec($command);
-
-        $this->logAction('Backup', 'System', "Database backup created: {$filename}");
-
-        return response()->download($path)->deleteFileAfterSend(true);
-    }
-
     public function storeDepartment(Request $request)
     {
         $request->validate([
@@ -359,5 +337,85 @@ class ControlPanelController extends Controller
         return redirect()->back()->with('success', 'Sport deactivated successfully.');
     }
 
+    public function backupDatabase()
+{
+    try {
+        $filename = 'backup-' . date('Y-m-d_H-i-s') . '.sql';
+        
+        $dbHost = env('DB_HOST', '127.0.0.1');
+        $dbName = env('DB_DATABASE');
+        $dbUser = env('DB_USERNAME');
+        $dbPass = env('DB_PASSWORD');
+
+        // For Windows (XAMPP)
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $mysqldumpPath = 'C:\xampp\mysql\bin\mysqldump.exe';
+            
+            // Check if mysqldump exists
+            if (!file_exists($mysqldumpPath)) {
+                // Try to find it in PATH
+                exec('where mysqldump', $output, $returnVar);
+                if ($returnVar === 0) {
+                    $mysqldumpPath = 'mysqldump';
+                } else {
+                    throw new \Exception("mysqldump not found. Please ensure MySQL is installed.");
+                }
+            }
+            
+            // Create backup in a temporary file
+            $tempFile = tempnam(sys_get_temp_dir(), 'backup_') . '.sql';
+            
+            $command = sprintf(
+                '"%s" --host=%s --user=%s --password=%s %s > "%s"',
+                $mysqldumpPath,
+                $dbHost,
+                $dbUser,
+                $dbPass,
+                $dbName,
+                $tempFile
+            );
+        } else {
+            // For Linux/Mac
+            $tempFile = tempnam(sys_get_temp_dir(), 'backup_') . '.sql';
+            
+            $command = sprintf(
+                'mysqldump --host=%s --user=%s --password=%s %s > "%s"',
+                $dbHost,
+                $dbUser,
+                $dbPass,
+                $dbName,
+                $tempFile
+            );
+        }
+
+        // Execute the command
+        exec($command, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            throw new \Exception("Database backup failed with error code: $returnVar");
+        }
+
+        if (!file_exists($tempFile)) {
+            throw new \Exception("Backup file was not created.");
+        }
+
+        $fileSize = filesize($tempFile);
+        if ($fileSize === 0) {
+            unlink($tempFile);
+            throw new \Exception("Backup file is empty. Check database connection.");
+        }
+
+        $this->logAction('Backup', 'System', "Database backup downloaded: {$filename} ({$fileSize} bytes)");
+
+        // Download the file and delete temp file after
+        $response = response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+        
+        return $response;
+
+    } catch (\Exception $e) {
+        \Log::error('Database backup failed: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Backup failed: ' . $e->getMessage());
+    }
+}
 
 }

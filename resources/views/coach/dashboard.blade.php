@@ -2,92 +2,92 @@
 @section('title', 'Coach Dashboard')
 
 @section('content')
+
 <!-- =======================
-     Metric Cards
+     Charts Section
 ======================= -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-    <!-- Athletes -->
-    <a href="{{ url('/coach/athletes') }}" class="block">
-        <div class="bg-green-500 rounded-lg p-6 text-white shadow-lg hover:scale-105 transition">
-            <div class="flex items-center justify-center mb-4">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-                    </svg>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- ========= Donut Chart ========= -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex flex-col lg:flex-row items-center justify-between">
+            <div class="w-80 h-80">
+                <canvas id="donutChart"></canvas>
+            </div>
+            
+            <!-- Donut Legend -->
+            <div class="ml-0 lg:ml-8 mt-6 lg:mt-0 space-y-4 text-sm">
+                <div class="flex justify-between gap-6">
+                    <span><span class="w-3 h-3 bg-green-500 inline-block mr-2 rounded-full"></span>Athletes</span>
+                    <span class="font-semibold">{{ $donutData['athletes'] ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between gap-6">
+                    <span><span class="w-3 h-3 bg-yellow-500 inline-block mr-2 rounded-full"></span>Performance</span>
+                    <span class="font-semibold">{{ $donutData['performance'] ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between gap-6">
+                    <span><span class="w-3 h-3 bg-blue-500 inline-block mr-2 rounded-full"></span>Events</span>
+                    <span class="font-semibold">{{ $donutData['events'] ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between gap-6">
+                    <span><span class="w-3 h-3 bg-red-500 inline-block mr-2 rounded-full"></span>Attendance</span>
+                    <span class="font-semibold">{{ $donutData['attendance'] ?? 0 }}</span>
                 </div>
             </div>
-            <h3 class="text-xl font-bold text-center mb-2">Athletes</h3>
-            <p class="text-3xl font-bold text-center">{{ $athletesCount }}</p>
+        </div>
+    </div>
+
+    <!-- ========= Bar Chart ========= -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="h-80">
+            <canvas id="barChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- =======================
+     Metric Cards (Clickable)
+======================= -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Athletes -->
+    <a href="{{ url('/coach/athletes') }}">
+        <div class="bg-green-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
+            <h3 class="text-center font-bold">ATHLETES</h3>
+            <p class="text-3xl text-center font-bold">{{ $athletesCount }}</p>
         </div>
     </a>
 
     <!-- Performance Notes -->
-    <a href="{{ url('/coach/reports/performance') }}" class="block">
-        <div class="bg-yellow-500 rounded-lg p-6 text-white shadow-lg hover:scale-105 transition">
-            <div class="flex items-center justify-center mb-4">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
-                    </svg>
-                </div>
-            </div>
-            <h3 class="text-xl font-bold text-center mb-2">Performance Notes</h3>
-            <p class="text-3xl font-bold text-center">{{ $performanceCount }}</p>
+    <a href="{{ url('/coach/reports/performance') }}">
+        <div class="bg-yellow-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
+            <h3 class="text-center font-bold">PERFORMANCE</h3>
+            <p class="text-3xl text-center font-bold">{{ $performanceCount }}</p>
         </div>
     </a>
 
     <!-- Events -->
-    <a href="{{ url('/events') }}" class="block">
-        <div class="bg-blue-500 rounded-lg p-6 text-white shadow-lg hover:scale-105 transition">
-            <div class="flex items-center justify-center mb-4">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                    </svg>
-                </div>
-            </div>
-            <h3 class="text-xl font-bold text-center mb-2">Events</h3>
-            <p class="text-3xl font-bold text-center">{{ $eventsCount }}</p>
+    <a href="{{ url('/events') }}">
+        <div class="bg-blue-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
+            <h3 class="text-center font-bold">EVENTS</h3>
+            <p class="text-3xl text-center font-bold">{{ $eventsCount }}</p>
         </div>
     </a>
 
     <!-- Attendance -->
-    <a href="{{ url('/coach/reports/attendance') }}" class="block">
-        <div class="bg-red-500 rounded-lg p-6 text-white shadow-lg hover:scale-105 transition">
-            <div class="flex items-center justify-center mb-4">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-            </div>
-            <h3 class="text-xl font-bold text-center mb-2">Attendance</h3>
-            <p class="text-3xl font-bold text-center">{{ $attendanceCount }}</p>
+    <a href="{{ url('/coach/reports/attendance') }}">
+        <div class="bg-red-500 p-6 rounded-lg text-white shadow-lg hover:scale-105 transition">
+            <h3 class="text-center font-bold">ATTENDANCE</h3>
+            <p class="text-3xl text-center font-bold">{{ $attendanceCount }}</p>
         </div>
     </a>
-</div>
-
-<!-- =======================
-     Charts
-======================= -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Donut Chart -->
-    <div class="bg-white rounded-lg shadow-lg p-6">
-        <canvas id="donutChart"></canvas>
-    </div>
-
-    <!-- Bar Chart -->
-    <div class="bg-white rounded-lg shadow-lg p-6">
-        <canvas id="barChart"></canvas>
-    </div>
 </div>
 
 <!-- =======================
      Chart Scripts
 ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-/* ===== Plugin: Percentages inside chart (Hide 0 values) ===== */
+/* ===== Percentage Plugin (FIXED CENTERING) ===== */
 const insidePercentagePlugin = {
     id: 'insidePercentagePlugin',
     afterDatasetsDraw(chart) {
@@ -96,15 +96,22 @@ const insidePercentagePlugin = {
         const total = dataset.data.reduce((a, b) => a + b, 0);
 
         chart.getDatasetMeta(0).data.forEach((el, i) => {
-            if (dataset.data[i] === 0) return; // Hide zero values
+            // Hide zero values
+            if (dataset.data[i] === 0) return;
 
-            const percent = total ? ((dataset.data[i] / total) * 100).toFixed(1) + '%' : '0%';
+            const percent = total
+                ? ((dataset.data[i] / total) * 100).toFixed(1) + '%'
+                : '0%';
+
             let x, y;
 
+            // ✅ BAR CHART — PERFECT CENTER
             if (chart.config.type === 'bar') {
                 x = el.x;
                 y = el.y + (el.base - el.y) / 2;
-            } else {
+            }
+            // ✅ DONUT CHART
+            else {
                 const pos = el.tooltipPosition();
                 x = pos.x;
                 y = pos.y;
@@ -134,13 +141,35 @@ new Chart(document.getElementById('donutChart'), {
                 {{ $donutData['attendance'] ?? 0 }}
             ],
             backgroundColor: ['#10B981','#F59E0B','#3B82F6','#EF4444'],
+            hoverBackgroundColor: ['#0DA271','#E68A00','#2C75E0','#D93838'],
+            borderColor: '#ffffff',
+            borderWidth: 2,
             cutout: '60%',
-            borderWidth: 0
+            borderRadius: 8,
+            spacing: 2
         }]
     },
     options: {
         responsive: true,
-        plugins: { legend: { display: false } }
+        maintainAspectRatio: true,
+        plugins: { 
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                        return `${label}: ${value} (${percentage})`;
+                    }
+                }
+            }
+        },
+        animation: {
+            animateScale: true,
+            animateRotate: true
+        }
     },
     plugins: [insidePercentagePlugin]
 });
@@ -158,19 +187,98 @@ new Chart(document.getElementById('barChart'), {
                 {{ $barData['attendance'] ?? 0 }}
             ],
             backgroundColor: ['#10B981','#F59E0B','#3B82F6','#EF4444'],
+            hoverBackgroundColor: ['#0DA271','#E68A00','#2C75E0','#D93838'],
             borderRadius: 8,
-            borderSkipped: false
+            borderSkipped: false,
+            borderWidth: 0
         }]
     },
     options: {
         responsive: true,
-        scales: {
-            y: { beginAtZero: true },
-            x: { grid: { display: false } }
+        maintainAspectRatio: true,
+        plugins: { 
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.label}: ${context.raw}`;
+                    }
+                }
+            }
         },
-        plugins: { legend: { display: false } }
+        scales: {
+            y: { 
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                    drawBorder: false
+                },
+                ticks: {
+                    color: '#6B7280',
+                    font: {
+                        size: 12
+                    }
+                }
+            },
+            x: { 
+                grid: { display: false },
+                ticks: {
+                    color: '#6B7280',
+                    font: {
+                        size: 12
+                    }
+                }
+            }
+        },
+        animation: {
+            duration: 1000,
+            easing: 'easeOutQuart'
+        }
     },
     plugins: [insidePercentagePlugin]
 });
 </script>
+
+<style>
+/* Responsive adjustments for the donut chart layout */
+@media (max-width: 1024px) {
+    .flex-col.lg\:flex-row {
+        flex-direction: column;
+    }
+    
+    .ml-0.lg\:ml-8 {
+        margin-left: 0;
+    }
+    
+    .mt-6.lg\:mt-0 {
+        margin-top: 1.5rem;
+    }
+    
+    .w-80.h-80 {
+        width: 280px;
+        height: 280px;
+        margin: 0 auto;
+    }
+    
+    .h-80 {
+        height: 280px;
+    }
+}
+
+@media (max-width: 640px) {
+    .w-80.h-80 {
+        width: 240px;
+        height: 240px;
+    }
+    
+    .h-80 {
+        height: 240px;
+    }
+    
+    .text-3xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+    }
+}
+</style>
 @endsection

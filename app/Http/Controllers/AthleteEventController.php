@@ -9,21 +9,44 @@ use App\Models\Athlete;
 use App\Models\EventRegistration;
 use App\Models\AthleteEvent;
 use App\Models\Sport;
+use App\Models\AthleteTeam;
+use App\Models\Team;
+use App\Models\Notification;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AthleteEventController extends Controller
 {
-    // Show all eligible upcoming events
+    // Show all eligible upcoming events - FILTERED by athlete's sport
     public function index(Request $request)
     {
-        $athleteId = Auth::id(); // Logged in user id
+        $userId = Auth::id();
+        $athlete = Athlete::where('user_id', $userId)->firstOrFail();
+        $athleteId = $athlete->athlete_id;
+
+        // Get athlete's team/sport from athlete_team table
+        $athleteTeams = AthleteTeam::with('team')
+            ->where('athlete_id', $athleteId)
+            ->get();
+        
+        // Extract sport IDs from athlete's teams
+        $athleteSportIds = $athleteTeams->pluck('team.sport_id')->filter()->unique()->toArray();
 
         $search = $request->input('search');
         $sportId = $request->input('sport');
 
+        // Base query - only upcoming events (beyond today NOT accepted)
         $query = Event::with(['sport', 'athleteEvents'])
             ->where('removed', 0)
-            ->whereDate('event_date', '>=', now());
+            ->whereDate('event_date', '>=', Carbon::today()); // Only events from today onwards
+
+        // Filter by athlete's sports only
+        if (!empty($athleteSportIds)) {
+            $query->whereIn('sport_id', $athleteSportIds);
+        } else {
+            // If athlete has no team, show no events
+            $query->where('sport_id', -1);
+        }
 
         if ($search) {
             $query->where('event_name', 'like', '%' . $search . '%');
@@ -35,12 +58,11 @@ class AthleteEventController extends Controller
 
         $events = $query->orderBy('event_date', 'asc')->paginate(10);
 
-        $sports = Sport::all();
+        // Get sports that the athlete is actually part of
+        $sports = Sport::whereIn('sport_id', $athleteSportIds)->get();
 
         return view('athlete.events.index', compact('events', 'sports', 'search', 'sportId', 'athleteId'));
     }
-
-
 
     // Show participation history
     public function history(Request $request)
@@ -75,7 +97,7 @@ class AthleteEventController extends Controller
         return view('athlete.events.history', compact('participations', 'sports', 'search', 'sportId'));
     }
 
-      public function register($eventId)
+    public function register($eventId)
     {
         $userId = Auth::id();
         $athlete = Athlete::where('user_id', $userId)->firstOrFail();

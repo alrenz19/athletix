@@ -87,7 +87,12 @@ public function show(Athlete $athlete)
     $athlete->load([
         'sport', 
         'teams', 
-        'events', 
+        'performances' => function($q) {
+            $q->latest()->with('event'); // Load event with each performance
+        },
+        'attendances' => function($q) {
+            $q->latest()->with('event'); // Load event with each attendance
+        },
         'awards' => function($q) {
             $q->latest()->with('event'); // Load event with each award
         },

@@ -126,6 +126,10 @@
                     </td>
                     <td class="px-3 py-2">
                         <div class="flex gap-2 items-center">
+                            <a href="{{ route('coach.athletes.show', $athlete->athlete_id) }}" 
+                                   class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                                    View
+                            </a>
                             <!-- Edit Button triggers modal -->
                             <button onclick="openModal({{ $athlete->athlete_id }})" 
                                     class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">

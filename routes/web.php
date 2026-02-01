@@ -187,6 +187,15 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Attendance
+        // Route::prefix('attendance')->group(function() {
+        //     Route::get('/', [AttendanceController::class, 'index'])->name('attendance');
+        //     Route::get('/create', [AttendanceController::class, 'create'])->name('attendance.create');
+        //     Route::post('/store', [AttendanceController::class, 'store'])->name('attendance.store');
+        //     Route::get('/edit/{attendance}', [AttendanceController::class, 'edit'])->name('attendance.edit');
+        //     Route::post('/update/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+        //     Route::post('/delete/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
+        // });
+
         Route::prefix('attendance')->group(function() {
             Route::get('/', [AttendanceController::class, 'index'])->name('attendance');
             Route::get('/create', [AttendanceController::class, 'create'])->name('attendance.create');
@@ -194,6 +203,11 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/edit/{attendance}', [AttendanceController::class, 'edit'])->name('attendance.edit');
             Route::post('/update/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
             Route::post('/delete/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
+            
+            // AJAX routes
+            Route::post('/update-status/{id}', [AttendanceController::class, 'updateStatus'])->name('attendance.update-status');
+            Route::post('/bulk-update', [AttendanceController::class, 'bulkUpdate'])->name('attendance.bulk-update');
+            Route::post('/delete-ajax/{id}', [AttendanceController::class, 'deleteAjax'])->name('attendance.delete-ajax');
         });
 
         // Notifications
@@ -245,6 +259,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/attendance', [CoachAttendancePerformanceController::class, 'index'])->name('attendance.index');
         Route::post('/attendance', [CoachAttendancePerformanceController::class, 'store'])->name('attendance.store');
+        Route::post('/attendance/bulk-update', [CoachAttendancePerformanceController::class, 'bulkUpdate'])
+         ->name('attendance.bulk-update');
     
         // Registrations index (all / filter by sport)
         Route::get('/registrations', [CoachController::class, 'registrations'])->name('events.registrations');
