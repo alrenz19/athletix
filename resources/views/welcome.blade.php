@@ -23,6 +23,19 @@
         10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
         20%, 40%, 60%, 80% { transform: translateX(5px); }
       }
+      .loading-ocr {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #8c2c08;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
     </style>
   </head>
   <body class="bg-[#ffffffde]">
@@ -142,11 +155,13 @@
                         </button>
                       </div>
                     </div>
+                    
                     <button type="button" id="scanOCR"
-                      class="mt-1 bg-[#8c2c08] text-white py-1 rounded hover:bg-[#7a2507] transition disabled:opacity-50 disabled:cursor-not-allowed">
-                      📷 Scan ID
+                      class="mt-1 bg-[#8c2c08] text-white py-1 rounded hover:bg-[#7a2507] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                      <span id="scanText">📷 Scan ID</span>
+                      <span id="scanLoader" class="loading-ocr hidden"></span>
                     </button>
-                    <p id="ocr-status" class="text-xs text-gray-600 mt-1"></p>
+                    <p id="ocr-status" class="text-xs mt-1"></p>
                   </div>
 
                   <!-- Full Name -->
@@ -266,40 +281,10 @@
       </div>
     </main>
 
-    <!-- Password Tips Modal -->
-    <div id="passwordTipsModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50 p-4">
-        <div class="bg-white p-6 rounded-lg w-full max-w-lg mx-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-lg text-[#8c2c08]">Password Security Tips</h3>
-                <button onclick="closeModal('passwordTipsModal')" class="text-gray-600 hover:text-gray-800 text-xl">&times;</button>
-            </div>
-            <div class="space-y-3 text-sm">
-                <p><strong class="text-[#8c2c08]">✓ Strong passwords should include:</strong></p>
-                <ul class="list-disc pl-5 space-y-1 text-gray-700">
-                    <li>At least 8 characters (12+ recommended)</li>
-                    <li>Mix of uppercase and lowercase letters</li>
-                    <li>Numbers (0-9)</li>
-                    <li>Special characters (!@#$%^&* etc.)</li>
-                    <li>Avoid common words or personal information</li>
-                </ul>
-                <p><strong class="text-[#8c2c08]">✓ Best practices:</strong></p>
-                <ul class="list-disc pl-5 space-y-1 text-gray-700">
-                    <li>Use a different password for each account</li>
-                    <li>Consider using a password manager</li>
-                    <li>Change passwords regularly</li>
-                    <li>Never share passwords via email or chat</li>
-                </ul>
-                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                    <p class="text-yellow-800"><strong>Note:</strong> Click "Generate Secure Password" for a strong, random password.</p>
-                </div>
-            </div>
-            <div class="flex justify-end mt-6">
-                <button type="button" class="px-4 py-2 bg-[#8c2c08] text-white rounded hover:bg-[#7a2507]" onclick="closeModal('passwordTipsModal')">Close</button>
-            </div>
-        </div>
-    </div>
-
     <script>
+      let currentEnhancement = 'original';
+      let originalImageData = null;
+
       const formsWrapper = document.getElementById("formsWrapper");
       const showSignup = document.getElementById("showSignup");
       const showLogin = document.getElementById("showLogin");
@@ -307,7 +292,6 @@
       showSignup.addEventListener("click", (e) => {
         e.preventDefault();
         formsWrapper.style.transform = "translateX(-50%)";
-        // Initialize password strength when switching to signup
         setTimeout(() => {
           checkSignupPasswordStrength();
           checkSignupPasswordMatch();
@@ -327,19 +311,19 @@
         const previewImage = document.getElementById('previewImage');
         const scanBtn = document.getElementById('scanOCR');
         const signupBtn = document.getElementById('signupSubmit');
+        const enhancementOptions = document.getElementById('enhancementOptions');
         
-        // Reset states
         errorElement.classList.add('hidden');
         input.classList.remove('file-input-error');
         
         if (!file) {
           filePreview.classList.add('hidden');
+          enhancementOptions.classList.add('hidden');
           scanBtn.disabled = true;
           signupBtn.disabled = false;
           return;
         }
         
-        // Check file type
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
         const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
@@ -350,39 +334,111 @@
           input.classList.add('file-input-error');
           input.value = '';
           filePreview.classList.add('hidden');
+          enhancementOptions.classList.add('hidden');
           scanBtn.disabled = true;
           signupBtn.disabled = true;
           return;
         }
         
-        // Check file size (5MB max)
-        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        const maxSize = 5 * 1024 * 1024;
         if (file.size > maxSize) {
           errorElement.textContent = 'File size too large. Maximum size is 5MB.';
           errorElement.classList.remove('hidden');
           input.classList.add('file-input-error');
           input.value = '';
           filePreview.classList.add('hidden');
+          enhancementOptions.classList.add('hidden');
           scanBtn.disabled = true;
           signupBtn.disabled = true;
           return;
         }
         
-        // Valid file - show preview and enable buttons
         errorElement.classList.add('hidden');
         input.classList.remove('file-input-error');
         scanBtn.disabled = false;
         signupBtn.disabled = false;
+        enhancementOptions.classList.remove('hidden');
         
-        // Show preview for image files
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            previewImage.src = e.target.result;
-            filePreview.classList.remove('hidden');
-          }
-          reader.readAsDataURL(file);
+        // Store original image data for enhancement
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImage.src = e.target.result;
+          originalImageData = e.target.result;
+          filePreview.classList.remove('hidden');
         }
+        reader.readAsDataURL(file);
+      }
+      
+      // Image enhancement for better OCR
+      function applyImageEnhancement(type) {
+        currentEnhancement = type;
+        const previewImage = document.getElementById('previewImage');
+        
+        if (!originalImageData) return;
+        
+        // Reset to original first
+        previewImage.src = originalImageData;
+        
+        if (type === 'grayscale') {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+              const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+              data[i] = avg;     // red
+              data[i + 1] = avg; // green
+              data[i + 2] = avg; // blue
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            previewImage.src = canvas.toDataURL();
+          };
+          
+          img.src = originalImageData;
+        } else if (type === 'contrast') {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const contrast = 1.5;
+            
+            for (let i = 0; i < data.length; i += 4) {
+              data[i] = ((data[i] - 128) * contrast) + 128;
+              data[i + 1] = ((data[i + 1] - 128) * contrast) + 128;
+              data[i + 2] = ((data[i + 2] - 128) * contrast) + 128;
+              
+              // Clamp values
+              data[i] = Math.min(255, Math.max(0, data[i]));
+              data[i + 1] = Math.min(255, Math.max(0, data[i + 1]));
+              data[i + 2] = Math.min(255, Math.max(0, data[i + 2]));
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            previewImage.src = canvas.toDataURL();
+          };
+          
+          img.src = originalImageData;
+        }
+        
+        // Update OCR status
+        document.getElementById('ocr-status').innerText = `✅ Applied ${type} enhancement. Try scanning again.`;
+        document.getElementById('ocr-status').className = 'text-xs mt-1 text-green-600';
       }
       
       function removeFilePreview() {
@@ -390,13 +446,16 @@
         const filePreview = document.getElementById('filePreview');
         const scanBtn = document.getElementById('scanOCR');
         const signupBtn = document.getElementById('signupSubmit');
+        const enhancementOptions = document.getElementById('enhancementOptions');
         
         input.value = '';
         filePreview.classList.add('hidden');
+        enhancementOptions.classList.add('hidden');
         scanBtn.disabled = true;
         signupBtn.disabled = false;
+        originalImageData = null;
+        currentEnhancement = 'original';
         
-        // Also clear OCR status
         document.getElementById('ocr-status').innerText = '';
       }
 
@@ -408,7 +467,6 @@
         if (input && button) {
           if (input.type === 'password') {
             input.type = 'text';
-            // Change to eye-slash icon
             button.innerHTML = `
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
@@ -417,7 +475,6 @@
             `;
           } else {
             input.type = 'password';
-            // Change back to eye icon
             button.innerHTML = `
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
@@ -434,13 +491,6 @@
         const strengthBar = document.getElementById('signupStrengthBar');
         const strengthText = document.getElementById('signupPasswordStrength');
         
-        // Reset checks
-        resetCheck('signupLength', '8+ characters');
-        resetCheck('signupLowercase', 'Lowercase letter');
-        resetCheck('signupUppercase', 'Uppercase letter');
-        resetCheck('signupNumber', 'Contains number');
-        resetCheck('signupSpecial', 'Special character');
-        
         if (password.length === 0) {
           strengthBar.style.width = '0%';
           strengthBar.className = 'h-2 rounded-full password-strength-bar bg-gray-300';
@@ -452,29 +502,18 @@
         let score = 0;
         const totalChecks = 5;
         
-        // Check criteria
         const hasLength = password.length >= 8;
         const hasLowercase = /[a-z]/.test(password);
         const hasUppercase = /[A-Z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
         const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
         
-        // Update checkmarks
-        updateCheck('signupLength', hasLength, '8+ characters');
-        updateCheck('signupLowercase', hasLowercase, 'Lowercase letter');
-        updateCheck('signupUppercase', hasUppercase, 'Uppercase letter');
-        updateCheck('signupNumber', hasNumber, 'Contains number');
-        updateCheck('signupSpecial', hasSpecial, 'Special character');
-        
-        // Calculate score
         score = [hasLength, hasLowercase, hasUppercase, hasNumber, hasSpecial]
           .filter(Boolean).length;
         
-        // Calculate percentage
         const percentage = (score / totalChecks) * 100;
         strengthBar.style.width = percentage + '%';
         
-        // Update strength indicator
         if (score === 0) {
           strengthBar.className = 'h-2 rounded-full password-strength-bar bg-gray-300';
           strengthText.textContent = 'Very Weak';
@@ -497,29 +536,7 @@
           strengthText.className = 'ml-2 text-sm text-green-600';
         }
         
-        // Also check password match
         checkSignupPasswordMatch();
-      }
-
-      function resetCheck(elementId, text) {
-        const element = document.getElementById(elementId);
-        if (element) {
-          element.innerHTML = '<span class="mr-1">⬜</span>' + text;
-          element.className = 'flex items-center criteria-check text-gray-600';
-        }
-      }
-
-      function updateCheck(elementId, isValid, text) {
-        const element = document.getElementById(elementId);
-        if (element) {
-          if (isValid) {
-            element.innerHTML = '<span class="mr-1 text-green-500">✓</span>' + text;
-            element.className = 'flex items-center criteria-check text-green-600';
-          } else {
-            element.innerHTML = '<span class="mr-1 text-red-500">✗</span>' + text;
-            element.className = 'flex items-center criteria-check text-red-600';
-          }
-        }
       }
 
       function checkSignupPasswordMatch() {
@@ -550,163 +567,21 @@
         }
       }
 
-      // Password generation
-      function generateSignupPassword(length = 12) {
-        const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const lower = "abcdefghijklmnopqrstuvwxyz";
-        const numbers = "0123456789";
-        const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
-
-        const allChars = upper + lower + numbers + symbols;
-
-        let password = [
-          upper[randomIndex(upper)],
-          lower[randomIndex(lower)],
-          numbers[randomIndex(numbers)],
-          symbols[randomIndex(symbols)]
-        ];
-
-        for (let i = password.length; i < length; i++) {
-          password.push(allChars[randomIndex(allChars)]);
-        }
-
-        // Shuffle the password array
-        password = shuffleArray(password);
-
-        const passwordField = document.getElementById('signupPassword');
-        passwordField.value = password.join('');
-        passwordField.type = 'text';
-        
-        // Update toggle button
-        const toggleBtn = document.getElementById('signupToggle');
-        if (toggleBtn) {
-          toggleBtn.innerHTML = `
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
-              <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
-            </svg>
-          `;
-        }
-        
-        // Trigger strength check
-        checkSignupPasswordStrength();
-        
-        // Also update confirm field if empty
-        const confirmField = document.getElementById('signupPasswordConfirm');
-        if (!confirmField.value) {
-          confirmField.value = password.join('');
-          confirmField.type = 'text';
-          const confirmToggleBtn = document.getElementById('signupConfirmToggle');
-          if (confirmToggleBtn) {
-            confirmToggleBtn.innerHTML = `
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
-                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
-              </svg>
-            `;
-          }
-          checkSignupPasswordMatch();
-        }
-      }
-
-      function randomIndex(str) {
-        return crypto.getRandomValues(new Uint32Array(1))[0] % str.length;
-      }
-
-      function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-      }
-
-      // Modal functions
-      function showPasswordTips() {
-        document.getElementById('passwordTipsModal').classList.remove('hidden');
-      }
-
-      function closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
-      }
-
-      // Form validation
-      document.getElementById('signup-form')?.addEventListener('submit', function(event) {
-        // Check if valid image is uploaded
-        const fileInput = document.getElementById('school_id_image');
-        const file = fileInput.files[0];
-        
-        if (file) {
-          // Validate file type on submission (extra safety)
-          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-          const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-          const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-          
-          if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-            event.preventDefault();
-            alert('Invalid file type. Please upload only JPG, JPEG, PNG, or WEBP images.');
-            return false;
-          }
-          
-          // Check file size (5MB max)
-          const maxSize = 5 * 1024 * 1024;
-          if (file.size > maxSize) {
-            event.preventDefault();
-            alert('File size too large. Maximum size is 5MB.');
-            return false;
-          }
-        }
-        
-        // Check password strength
-        const password = document.getElementById('signupPassword').value;
-        const confirmPassword = document.getElementById('signupPasswordConfirm').value;
-        
-        const hasLength = password.length >= 8;
-        const hasLowercase = /[a-z]/.test(password);
-        const hasUppercase = /[A-Z]/.test(password);
-        const hasNumber = /[0-9]/.test(password);
-        
-        if (!hasLength || !hasLowercase || !hasUppercase || !hasNumber) {
-          event.preventDefault();
-          alert('Password must be at least 8 characters long and contain uppercase, lowercase letters, and numbers.');
-          return false;
-        }
-        
-        if (password !== confirmPassword) {
-          event.preventDefault();
-          alert('Passwords do not match. Please confirm your password.');
-          return false;
-        }
-        
-        return true;
-      });
-
       // Initialize when page loads
       document.addEventListener('DOMContentLoaded', function() {
         checkSignupPasswordStrength();
         checkSignupPasswordMatch();
-        
-        // Disable scan button initially
         document.getElementById('scanOCR').disabled = true;
       });
-
-      // Close modal when clicking outside
-      window.onclick = function(event) {
-        if (event.target === document.getElementById('passwordTipsModal')) {
-          closeModal('passwordTipsModal');
-        }
-      };
     </script>
 
     <script>
     document.getElementById('login-form').addEventListener('submit', function (e) {
-        e.preventDefault(); // Prevent normal form submission
+        e.preventDefault();
 
-        // Clear previous errors
         document.getElementById('username-error').innerText = '';
         document.getElementById('password-error').innerText = '';
 
-        // Get form data
         let formData = new FormData(this);
 
         fetch("{{ route('login.attempt') }}", {
@@ -719,10 +594,8 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Redirect on success
-                window.location.href = data.redirect_url; // redirect to announcement page
+                window.location.href = data.redirect_url;
             } else {
-                // Display validation errors
                 if (data.errors.username) {
                     document.getElementById('username-error').innerText = data.errors.username[0];
                 }
@@ -748,13 +621,12 @@
           body: formData,
           headers: {
               'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-              'Accept': 'application/json'  // 👈 this forces JSON instead of redirect
+              'Accept': 'application/json'
           }
       })
       .then(response => response.json())
       .then(data => {
           if (data.success) {
-              // ✅ redirect straight to OTP page
               window.location.href = data.redirect_url;
           } else {
               alert(data.message);
@@ -765,65 +637,272 @@
       });
   });
   </script>
-<script>
-document.getElementById('scanOCR').addEventListener('click', function () {
-  const fileInput = document.getElementById('school_id_image');
-  const status = document.getElementById('ocr-status');
-  const fullName = document.getElementById('full_name');
-  const schoolId = document.getElementById('school_id');
-  const scanBtn = this;
-
-  if (!fileInput.files.length) {
-    alert('Please upload your CTU ID image first.');
-    return;
-  }
-
-  // Double-check file type before scanning
-  const file = fileInput.files[0];
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-  const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
   
-  if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-    alert('Invalid file type for OCR. Please upload only JPG, JPEG, PNG, or WEBP images.');
-    return;
-  }
+  <script>
+  document.getElementById('scanOCR').addEventListener('click', async function () {
+    const fileInput = document.getElementById('school_id_image');
+    const status = document.getElementById('ocr-status');
+    const fullName = document.getElementById('full_name');
+    const schoolId = document.getElementById('school_id');
+    const scanBtn = this;
+    const scanText = document.getElementById('scanText');
+    const scanLoader = document.getElementById('scanLoader');
 
-  scanBtn.disabled = true;
-  status.innerText = '🔍 Scanning ID... please wait.';
-
-  const formData = new FormData();
-  formData.append('school_id_image', fileInput.files[0]);
-
-  fetch("{{ route('ocr.extract') }}", {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'X-CSRF-TOKEN': document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute('content'),
-      'Accept': 'application/json'
+    if (!fileInput.files.length) {
+        status.innerText = '❌ Please upload your CTU ID image first.';
+        status.className = 'text-xs mt-1 text-red-600';
+        return;
     }
-  })
-  .then(res => res.json())
-  .then(data => {
-    scanBtn.disabled = false;
 
-    if (data.success) {
-      fullName.value = data.full_name !== 'Not Detected' ? data.full_name : '';
-      schoolId.value = data.school_id !== 'Not Detected' ? data.school_id : '';
-      status.innerText = '✅ OCR complete! Please verify.';
-    } else {
-      status.innerText = '❌ OCR failed: ' + data.message;
+    const file = fileInput.files[0];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        status.innerText = '❌ Invalid file type for OCR.';
+        status.className = 'text-xs mt-1 text-red-600';
+        return;
     }
-  })
-  .catch(err => {
-    scanBtn.disabled = false;
-    console.error(err);
-    status.innerText = '❌ OCR error occurred.';
-  });
+
+    scanBtn.disabled = true;
+    scanText.innerText = 'Scanning...';
+    scanLoader.classList.remove('hidden');
+    status.innerText = '🔍 Scanning ID... Processing image...';
+    status.className = 'text-xs mt-1 text-blue-600';
+
+    const formData = new FormData();
+    formData.append('school_id_image', fileInput.files[0]);
+    formData.append('enhancement', currentEnhancement);
+
+    fetch("{{ route('ocr.extract') }}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+    })
+    .then(data => {
+        scanBtn.disabled = false;
+        scanText.innerText = '📷 Scan ID';
+        scanLoader.classList.add('hidden');
+
+        // Process raw text if available
+        let frontendExtracted = false;
+        if (data.raw_text) {
+            const lines = data.raw_text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            
+            // Try to extract data from raw text using frontend parser
+            const extractedData = extractDataFromOCR(lines);
+            
+            if (extractedData.full_name || extractedData.school_id) {
+                frontendExtracted = true;
+                
+                // Update form fields with extracted data (frontend takes priority)
+                if (extractedData.full_name && extractedData.full_name !== 'Not Detected') {
+                    fullName.value = extractedData.full_name;
+                }
+                if (extractedData.school_id && extractedData.school_id !== 'Not Detected') {
+                    schoolId.value = extractedData.school_id;
+                }
+            }
+        }
+
+        // If backend provided data and frontend didn't extract, use backend data
+        if (!frontendExtracted && data.success) {
+            if (data.full_name !== 'Not Detected') {
+                fullName.value = data.full_name;
+            }
+            if (data.school_id !== 'Not Detected') {
+                schoolId.value = data.school_id;
+            }
+        }
+
+        // Determine final status message
+        const finalName = fullName.value;
+        const finalId = schoolId.value;
+        
+        if (finalName && finalId) {
+            status.innerText = `✅ OCR successful! Name: ${finalName}, ID: ${finalId}`;
+            status.className = 'text-xs mt-1 text-green-600';
+        } else if (finalName || finalId) {
+            status.innerText = `⚠️ Partial extraction. Name: ${finalName || 'N/A'}, ID: ${finalId || 'N/A'}`;
+            status.className = 'text-xs mt-1 text-yellow-600';
+        } else {
+            status.innerText = '❌ No text detected. Try a clearer image or different enhancement.';
+            status.className = 'text-xs mt-1 text-red-600';
+        }
+    })
+    .catch(err => {
+        scanBtn.disabled = false;
+        scanText.innerText = '📷 Scan ID';
+        scanLoader.classList.add('hidden');
+        console.error('OCR Error:', err);
+        status.innerText = '❌ OCR error occurred. Please try again.';
+        status.className = 'text-xs mt-1 text-red-600';
+    });
 });
-</script>
+
+// Function to extract data from OCR raw text with improved pattern matching
+function extractDataFromOCR(lines) {
+    const result = {
+        full_name: 'Not Detected',
+        school_id: 'Not Detected',
+    };
+    
+    // Clean lines - remove empty lines and trim
+    const cleanLines = lines.map(line => line.trim()).filter(line => line.length > 0);
+    
+    // STRATEGY 1: Look for school ID patterns
+    // Multiple patterns to catch different ID formats
+    const idPatterns = [
+        /ID\s*(?:NO\.?|NUMBER)?\s*:?\s*(\d{6,8})/i,  // "ID NO.: 1333788" or "ID NO:1333788"
+        /ID\s*NO\.?\s*(\d{6,8})/i,                     // "ID NO.1333788"
+        /ID\s*:\s*(\d{6,8})/i,                         // "ID: 1333788"
+        /^(\d{6,8})$/,                                 // Just numbers on a line
+        /NO[\.:]?\s*(\d{6,8})/i                        // "NO.:1333788" or "NO:1333788"
+    ];
+    
+    // Check each line for ID patterns
+    for (let i = 0; i < cleanLines.length; i++) {
+        const line = cleanLines[i];
+        
+        for (const pattern of idPatterns) {
+            const match = line.match(pattern);
+            if (match && match[1]) {
+                result.school_id = match[1];
+                break;
+            }
+        }
+        
+        // Check if this line is just numbers and next line has "ID" or previous line has "ID"
+        if (line.match(/^\d{6,8}$/)) {
+            // Check previous line for ID reference
+            if (i > 0 && cleanLines[i-1].toUpperCase().includes('ID')) {
+                result.school_id = line;
+                break;
+            }
+            // Check if line looks like it could be an ID (6-8 digits)
+            else if (line.length >= 6 && line.length <= 8 && /^\d+$/.test(line)) {
+                result.school_id = line;
+                break;
+            }
+        }
+        
+        if (result.school_id !== 'Not Detected') break;
+    }
+    
+    // STRATEGY 2: Look for full name patterns
+    // CTU IDs usually have names in specific formats
+    
+    // Pattern 1: Two words with capital letters (First Last)
+    const namePattern1 = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+    // Pattern 2: Multiple words with capital letters
+    const namePattern2 = /^[A-Z][a-z]+(?: [A-Z][a-z]+)+$/;
+    // Pattern 3: All caps name (FIRST LAST)
+    const namePattern3 = /^[A-Z]+ [A-Z]+$/;
+    // Pattern 4: Name with middle initial (First M. Last)
+    const namePattern4 = /^[A-Z][a-z]+ [A-Z]\. [A-Z][a-z]+$/;
+    
+    // Common non-name words to exclude
+    const excludeWords = ['UNIVERSITY', 'TECHNOLOGICAL', 'CEBU', 'CAMPUS', 'AVENUE', 
+                         'STREET', 'CITY', 'PHILIPPINES', 'REPUBLIC', 'MAIN', 'CORNER',
+                         'COURSE', 'SYSTEM', 'MANAGEMENT', 'CERTIFIED', 'CERTIFILO',
+                         'TUV', 'RHEINLAND', 'ISO', 'BSIS', 'BSMX', 'ID', 'NO', 'BAN',
+                         'CAFÉS', 'QUẢNG', 'NINH', 'SOUTHERN', 'VIETNAM', 'TELEPHONE',
+                         'CEBA', 'CESE', 'TECHNOEARIE', 'INVERSITY', 'BAALAMPN', 'MT'];
+    
+    for (let i = 0; i < cleanLines.length; i++) {
+        const line = cleanLines[i];
+        
+        // Skip lines that are obviously not names
+        if (excludeWords.some(word => line.toUpperCase().includes(word))) {
+            continue;
+        }
+        
+        // Check if line matches name patterns
+        if (namePattern1.test(line) || namePattern2.test(line) || 
+            namePattern3.test(line) || namePattern4.test(line)) {
+            
+            // Additional validation: name shouldn't be too short or too long
+            const words = line.split(' ');
+            if (words.length >= 2 && words.length <= 4) {
+                // Check if it looks like a real name (not random OCR garbage)
+                const hasReasonableLength = words.every(word => word.length >= 2 && word.length <= 15);
+                const hasNoNumbers = !/\d/.test(line);
+                
+                if (hasReasonableLength && hasNoNumbers) {
+                    result.full_name = line;
+                    break;
+                }
+            }
+        }
+        
+        // Special case: Names split across lines (like "EURIES P." and "ARCHES")
+        if (i + 1 < cleanLines.length) {
+            const currentLine = line;
+            const nextLine = cleanLines[i + 1];
+            
+            // Check if current line looks like first part of name and next line looks like last name
+            if (currentLine.match(/^[A-Z][A-Za-z]+ [A-Z]\.?$/) && 
+                nextLine.match(/^[A-Z][A-Za-z]+$/)) {
+                const combinedName = `${currentLine} ${nextLine}`;
+                result.full_name = combinedName;
+                break;
+            }
+        }
+    }
+    
+    // STRATEGY 3: Fallback - look for lines that could be names based on position
+    if (result.full_name === 'Not Detected') {
+        // Try to find lines that are likely names based on their position
+        // In CTU IDs, names often appear after university name and before course/ID
+        
+        for (let i = 0; i < cleanLines.length; i++) {
+            const line = cleanLines[i];
+            
+            // Skip if line contains excluded words or numbers
+            if (excludeWords.some(word => line.toUpperCase().includes(word)) || /\d/.test(line)) {
+                continue;
+            }
+            
+            // Look for lines that have 2-3 words, all starting with capital letters
+            const words = line.split(' ');
+            if (words.length >= 2 && words.length <= 3) {
+                const allStartWithCapital = words.every(word => /^[A-Z]/.test(word));
+                const reasonableLength = words.every(word => word.length >= 2 && word.length <= 12);
+                
+                if (allStartWithCapital && reasonableLength) {
+                    // Check if next line contains ID or course info
+                    const hasIdNearby = false;
+                    for (let j = Math.max(0, i-2); j < Math.min(cleanLines.length, i+3); j++) {
+                        if (j !== i && (cleanLines[j].includes('ID') || /\d{6,8}/.test(cleanLines[j]))) {
+                            hasIdNearby = true;
+                            break;
+                        }
+                    }
+                    
+                    if (hasIdNearby) {
+                        result.full_name = line;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    return result;
+}
+  </script>
 
   </body>
 </html>

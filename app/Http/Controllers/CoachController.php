@@ -248,7 +248,11 @@ class CoachController extends Controller
         $email = filter_var($athlete->user->username, FILTER_VALIDATE_EMAIL)
             ? $athlete->user->username
             : 'default@yourdomain.com';
-        Mail::to($email)->send(new AthleteNotification($athlete, 'approved'));
+       // Mail::to($email)->send(new AthleteNotification($athlete, 'approved'));
+        Mail::to($email)->send(new AthleteNotification(
+            'Athlete Registration Status', // Title
+            'approved' // Message content
+        ));
         
         return back()->with('success', 'Athlete approved' . ($existingTeam ? '' : ' and added to team.'));
     }
@@ -273,8 +277,11 @@ class CoachController extends Controller
             ? $athlete->user->username
             : 'default@yourdomain.com';
         
-        Mail::to($email)->send(new AthleteNotification($athlete, 'rejected'));
-        
+        //Mail::to($email)->send(new AthleteNotification($athlete, 'rejected'));
+        Mail::to($email)->send(new AthleteNotification(
+            'Athlete Registration Status', // Title
+            'rejected' // Message content
+        ));        
         return back()->with('success', 'Athlete rejected.');
     }
 }

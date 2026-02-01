@@ -50,7 +50,11 @@
                         <div class="bg-white p-6 rounded-lg w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="font-bold text-lg">Edit User: {{ $user->username }}</h3>
-                                <button onclick="closeModal('editUserModal{{ $user->user_id }}')" class="text-gray-600 hover:text-gray-800 text-xl">&times;</button>
+                                <button onclick="closeModal('editUserModal{{ $user->user_id }}')" class="text-gray-600 hover:text-gray-800 text-xl">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </button>
                             </div>
                             <form action="{{ route('control-panel.updateUser', $user->user_id) }}" method="POST" id="editUserForm{{ $user->user_id }}">
                                 @csrf
@@ -75,15 +79,10 @@
                                                 onclick="togglePasswordVisibility('editPassword{{ $user->user_id }}', 'editToggle{{ $user->user_id }}')"
                                                 id="editToggle{{ $user->user_id }}"
                                                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800">
-                                            <!-- Eye icon (open eye) -->
-                                            <svg id="eyeIcon{{ $user->user_id }}" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <!-- Eye icon -->
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
                                                 <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                                            </svg>
-                                            <!-- Eye-slash icon (hidden, will be shown when password is visible) -->
-                                            <svg id="eyeSlashIcon{{ $user->user_id }}" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
-                                                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
                                             </svg>
                                         </button>
                                     </div>
@@ -142,8 +141,12 @@
                                         <button type="button" 
                                                 onclick="togglePasswordVisibility('editPasswordConfirm{{ $user->user_id }}', 'editConfirmToggle{{ $user->user_id }}')"
                                                 id="editConfirmToggle{{ $user->user_id }}"
-                                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
-                                            👁️
+                                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800">
+                                            <!-- Eye icon -->
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                                            </svg>
                                         </button>
                                     </div>
                                     <div id="editPasswordMatch{{ $user->user_id }}" class="text-sm mt-1"></div>
@@ -579,7 +582,11 @@
         <div id="dataBackupModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center p-4">
             <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
                 <h3 class="text-xl font-bold mb-4">Data Backup</h3>
-                <button class="absolute top-4 right-4 text-gray-600" onclick="closeModal('dataBackupModal')">✖️</button>
+                <button class="absolute top-4 right-4 text-gray-600 hover:text-gray-800" onclick="closeModal('dataBackupModal')">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
 
                 <p class="mb-4">Click the button below to download a full database backup.</p>
 
@@ -599,7 +606,11 @@
     <div class="bg-white p-6 rounded-lg w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-lg">Add New User</h3>
-            <button onclick="closeModal('addUserModal')" class="text-gray-600 hover:text-gray-800 text-xl">&times;</button>
+            <button onclick="closeModal('addUserModal')" class="text-gray-600 hover:text-gray-800 text-xl">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
         </div>
         <form action="{{ route('control-panel.storeUser') }}" method="POST" id="addUserForm">
             @csrf
@@ -622,8 +633,12 @@
                     <button type="button" 
                             onclick="togglePasswordVisibility('generatedPassword', 'addToggle')"
                             id="addToggle"
-                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
-                        👁️
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800">
+                        <!-- Eye icon -->
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                        </svg>
                     </button>
                 </div>
                 
@@ -682,8 +697,12 @@
                     <button type="button" 
                             onclick="togglePasswordVisibility('confirmPassword', 'addConfirmToggle')"
                             id="addConfirmToggle"
-                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
-                        👁️
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800">
+                        <!-- Eye icon -->
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                        </svg>
                     </button>
                 </div>
                 <div id="addPasswordMatch" class="text-sm mt-1"></div>
@@ -738,7 +757,11 @@
 <div id="auditLogsModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center overflow-auto p-4">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-6xl p-6 relative">
         <h3 class="text-xl font-bold mb-4">Audit Logs</h3>
-        <button class="absolute top-4 right-4 text-gray-600" onclick="closeModal('auditLogsModal')">✖️</button>
+        <button class="absolute top-4 right-4 text-gray-600 hover:text-gray-800" onclick="closeModal('auditLogsModal')">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+        </button>
 
         <div class="overflow-x-auto max-h-[70vh]">
             <table class="w-full text-left border">
@@ -774,7 +797,11 @@
     <div class="bg-white p-6 rounded-lg w-full max-w-lg mx-4">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-lg">Password Security Tips</h3>
-            <button onclick="closeModal('passwordTipsModal')" class="text-gray-600 hover:text-gray-800 text-xl">&times;</button>
+            <button onclick="closeModal('passwordTipsModal')" class="text-gray-600 hover:text-gray-800 text-xl">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
         </div>
         <div class="space-y-3 text-sm">
             <p><strong>✓ Strong passwords should include:</strong></p>
@@ -1075,10 +1102,22 @@
       if (input && button) {
           if (input.type === 'password') {
               input.type = 'text';
-              button.textContent = '🙈';
+              // Change to eye-slash icon
+              button.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                </svg>
+              `;
           } else {
               input.type = 'password';
-              button.textContent = '👁️';
+              // Change back to eye icon
+              button.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                </svg>
+              `;
           }
       }
   }
@@ -1110,9 +1149,16 @@
       passwordField.value = password.join('');
       passwordField.type = 'text';
       
-      // Update toggle button
+      // Update toggle button to eye-slash
       const toggleBtn = document.getElementById('addToggle');
-      if (toggleBtn) toggleBtn.textContent = '🙈';
+      if (toggleBtn) {
+          toggleBtn.innerHTML = `
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+            </svg>
+          `;
+      }
       
       // Trigger strength check
       checkAddPasswordStrength();
@@ -1123,7 +1169,14 @@
           confirmField.value = password.join('');
           confirmField.type = 'text';
           const confirmToggleBtn = document.getElementById('addConfirmToggle');
-          if (confirmToggleBtn) confirmToggleBtn.textContent = '🙈';
+          if (confirmToggleBtn) {
+              confirmToggleBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                </svg>
+              `;
+          }
           checkAddPasswordMatch();
       }
   }
@@ -1154,9 +1207,16 @@
       passwordField.value = password.join('');
       passwordField.type = 'text';
       
-      // Update toggle button
+      // Update toggle button to eye-slash
       const toggleBtn = document.getElementById('editToggle' + userId);
-      if (toggleBtn) toggleBtn.textContent = '🙈';
+      if (toggleBtn) {
+          toggleBtn.innerHTML = `
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+            </svg>
+          `;
+      }
       
       // Trigger strength check
       checkEditPasswordStrength(userId);
@@ -1167,7 +1227,14 @@
           confirmField.value = password.join('');
           confirmField.type = 'text';
           const confirmToggleBtn = document.getElementById('editConfirmToggle' + userId);
-          if (confirmToggleBtn) confirmToggleBtn.textContent = '🙈';
+          if (confirmToggleBtn) {
+              confirmToggleBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                </svg>
+              `;
+          }
           checkEditPasswordMatch(userId);
       }
   }
