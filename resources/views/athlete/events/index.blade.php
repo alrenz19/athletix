@@ -55,7 +55,7 @@
                             <span class="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Training</span>
                         @endif
                     </td>
-                    <td class="p-3 border">{{ \Carbon\Carbon::parse($event->event_date)->format('M d, Y') }}</td>
+                    <td class="p-3 border">{{ \Carbon\Carbon::parse($event->event_date)->setTimezone('Asia/Manila')->format('F d, Y \a\t h:i A') }}</td>
                     <td class="p-3 border">{{ $event->sport->sport_name ?? 'N/A' }}</td>
                     <td class="p-3 border">{{ $event->event_type }}</td>
                     <td class="p-3 border">{{ $event->location ?? 'TBA' }}</td>
