@@ -116,6 +116,7 @@
                                             $attendanceDate = \Carbon\Carbon::parse($event->event_date);
                                             $oneWeekAgo = \Carbon\Carbon::now()->subWeek();
                                             $canEdit = ($attendanceDate >= $oneWeekAgo);
+                                            $eventDate = $attendanceDate->format('F d Y');
                                         @endphp
                                         <tr class="hover:bg-gray-50 data-row" 
                                             id="{{ $rowId }}"
@@ -125,8 +126,11 @@
                                             data-original-score="{{ $performance?->score ?? '' }}"
                                             data-original-remarks="{{ $performance?->remarks ?? '' }}">
                                             <td class="p-3 border">
+                                                <div class="font-medium">{{ $eventDate }}</div>
+                                            </td>
+                                            <td class="p-3 border">
                                                 <div class="font-medium">{{ $athlete->full_name }}</div>
-                                                <div class="text-sm text-gray-500">{{ $athlete->student_id ?? '' }}</div>
+                                                <div class="text-sm text-gray-500">ID: {{ $athlete->school_id ?? '' }}</div>
                                             </td>
                                             <td class="p-3 border">
                                                 <div class="font-medium">{{ $event->event_name }}</div>

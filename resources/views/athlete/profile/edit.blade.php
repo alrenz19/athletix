@@ -97,10 +97,19 @@
         <div class="border-b pb-4">
             <h3 class="text-lg font-medium mb-4">Personal Information</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="md:col-span-2">
+                <!-- Full Name now takes half width instead of full -->
+                <div>
                     <label class="block text-gray-700 mb-2">Full Name</label>
                     <input type="text" name="full_name" value="{{ old('full_name', $athlete?->full_name) }}" class="w-full border rounded p-2">
                     @error('full_name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
+                
+                <!-- School ID aligned next to Full Name -->
+                <div>
+                    <label class="block text-gray-700 mb-2">School ID</label>
+                    <input type="text" readonly name="school_id" value="{{ old('school_id', $athlete?->school_id) }}" class="w-full border rounded p-2 bg-gray-50">
+                    @error('school_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    <p class="text-xs text-gray-500 mt-1">School ID cannot be changed</p>
                 </div>
 
                 <!-- Profile Image -->
@@ -137,7 +146,7 @@
                     </div>
 
                     <!-- New Image Upload -->
-                    <div class="mt-4">
+                    <div class="mt-1">
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors duration-200">
                             <div id="uploadArea" class="cursor-pointer">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,11 +209,6 @@
                         <option value="Other" {{ old('gender', $athlete?->gender) == 'Other' ? 'selected' : '' }}>Other</option>
                     </select>
                     @error('gender') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-                <div>
-                    <label class="block text-gray-700 mb-2">School ID</label>
-                    <input type="text" readonly name="school_id" value="{{ old('school_id', $athlete?->school_id) }}" class="w-full border rounded p-2">
-                    @error('school_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>
             </div>
         </div>

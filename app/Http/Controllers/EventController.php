@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use App\Models\Event;
 use App\Models\Sport;
 use App\Models\Team;
@@ -28,6 +29,7 @@ class EventController extends Controller
             $events = Event::where('removed', 0)
                         ->where('sport_id', $coach->sport_id)
                         ->with('sport')
+                        ->orderBy('event_date', 'asc')
                         ->get();
 
             $sports = Sport::where('removed', 0)
@@ -35,7 +37,10 @@ class EventController extends Controller
                         ->get();
         } else {
             // SuperAdmin & Staff see all
-            $events = Event::where('removed', 0)->with('sport')->get();
+            $events = Event::where('removed', 0)
+                        ->with('sport')
+                        ->orderBy('event_date', 'asc')
+                        ->get();
             $sports = Sport::where('removed', 0)->get();
         }
 
@@ -47,13 +52,21 @@ class EventController extends Controller
     {
         $user = Auth::user();
 
+        // Validate both date and time separately
+        $request->validate([
+            'event_date' => 'required|date',
+            'event_time' => 'required|date_format:H:i',
+        ]);
+
+        // Combine date and time into a single timestamp
+        $eventDateTime = $request->event_date . ' ' . $request->event_time;
+
         if ($user->role == 'Coach') {
             $coach = $user->coach;
 
             $request->validate([
                 'sport_id'   => 'required|in:' . $coach->sport_id,
                 'event_name' => 'required|string|max:255',
-                'event_date' => 'required|date',
                 'event_type' => 'required|in:Training,Competition,Meeting,TryOut',
                 'location'   => 'required|string|max:255',
             ]);
@@ -61,16 +74,21 @@ class EventController extends Controller
             $request->validate([
                 'sport_id'   => 'required|exists:sports,sport_id',
                 'event_name' => 'required|string|max:255',
-                'event_date' => 'required|date',
                 'event_type' => 'required|in:Training,Competition,Meeting,TryOut',
                 'location'   => 'required|string|max:255',
             ]);
         }
 
-        // Create the event
-        $event = Event::create($request->only([
-            'sport_id', 'event_name', 'event_date', 'event_type', 'location'
-        ]));
+        // Create the event with combined datetime
+        $eventData = [
+            'sport_id'   => $request->sport_id,
+            'event_name' => $request->event_name,
+            'event_date' => $eventDateTime,
+            'event_type' => $request->event_type,
+            'location'   => $request->location,
+        ];
+
+        $event = Event::create($eventData);
 
         // Send notifications for all event types
         $this->sendEventNotification($event, 'created');
@@ -84,30 +102,38 @@ class EventController extends Controller
         $event = Event::findOrFail($id);
         $user = Auth::user();
 
+        // Validate both date and time separately
+        $request->validate([
+            'event_date' => 'required|date',
+            'event_time' => 'required|date_format:H:i',
+            'event_name' => 'required|string|max:255',
+            'event_type' => 'required|in:Training,Competition,Meeting,TryOut',
+            'location'   => 'required|string|max:255',
+        ]);
+
+        // Combine date and time into a single timestamp
+        $eventDateTime = $request->event_date . ' ' . $request->event_time;
+
+        // Check coach permissions
         if ($user->role == 'Coach') {
             $coach = $user->coach;
-
+            if ($event->sport_id != $coach->sport_id) {
+                return redirect()->back()->with('error', 'You cannot edit events outside your sport.');
+            }
+            
             $request->validate([
-                'sport_id'   => 'required|in:' . $coach->sport_id,
-                'event_name' => 'required|string|max:255',
-                'event_date' => 'required|date',
-                'event_type' => 'required|in:Training,Competition,Meeting,TryOut',
-                'location'   => 'required|string|max:255',
+                'sport_id' => 'required|in:' . $coach->sport_id,
             ]);
         } else {
             $request->validate([
-                'sport_id'   => 'required|exists:sports,sport_id',
-                'event_name' => 'required|string|max:255',
-                'event_date' => 'required|date',
-                'event_type' => 'required|in:Training,Competition,Meeting,TryOut',
-                'location'   => 'required|string|max:255',
+                'sport_id' => 'required|exists:sports,sport_id',
             ]);
         }
 
-        // Update the event
+        // Update the event with combined datetime
         $event->sport_id   = $request->sport_id;
         $event->event_name = $request->event_name;
-        $event->event_date = $request->event_date;
+        $event->event_date = $eventDateTime;
         $event->event_type = $request->event_type;
         $event->location   = $request->location;
         $event->save();
@@ -153,11 +179,12 @@ class EventController extends Controller
                 return;
             }
 
-            // Prepare notification data
-            $formattedDate = date('F j, Y', strtotime($event->event_date));
+            // Prepare notification data with formatted date and time
+            $carbonDate = Carbon::parse($event->event_date);
+            $formattedDateTime = $carbonDate->format('F j, Y \a\t h:i A');
             $title = "New {$event->event_type} Scheduled";
             $message = "A {$event->event_type} event has been {$action} for {$sport->sport_name}. ";
-            $message .= "Date: {$formattedDate}. ";
+            $message .= "Date & Time: {$formattedDateTime}. ";
             $message .= "Location: {$event->location}. ";
             $message .= "Event: {$event->event_name}";
 
@@ -204,11 +231,12 @@ class EventController extends Controller
                 return;
             }
 
-            // Prepare notification data
-            $formattedDate = date('F j, Y', strtotime($event->event_date));
+            // Prepare notification data with formatted date and time
+            $carbonDate = Carbon::parse($event->event_date);
+            $formattedDateTime = $carbonDate->format('F j, Y \a\t h:i A');
             $title = "New Training Scheduled";
             $message = "A training session has been {$action} for {$sport->sport_name}. ";
-            $message .= "Date: {$formattedDate}. ";
+            $message .= "Date & Time: {$formattedDateTime}. ";
             $message .= "Location: {$event->location}. ";
             $message .= "Event: {$event->event_name}";
 

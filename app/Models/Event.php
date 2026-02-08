@@ -21,6 +21,10 @@ class Event extends Model
         'removed'
     ];
 
+    protected $casts = [
+        'event_date' => 'datetime:Y-m-d H:i:s',
+    ];
+
     public function sport()
     {
         return $this->belongsTo(Sport::class, 'sport_id', 'sport_id');
@@ -52,7 +56,17 @@ class Event extends Model
         return $this->hasMany(AthleteEvent::class, 'event_id');
     }
 
-    protected $casts = [
-        'event_date' => 'date',
-    ];
+    // Add this accessor to force Manila timezone
+    public function getEventDateAttribute($value)
+    {
+        if (!$value) return null;
+        
+        // If it's already a Carbon instance
+        if ($value instanceof \Carbon\Carbon) {
+            return $value->copy()->setTimezone('Asia/Manila');
+        }
+        
+        // If it's a string, parse it as Manila time
+        return \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $value, 'Asia/Manila');
+    }
 }

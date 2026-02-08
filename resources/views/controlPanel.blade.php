@@ -711,7 +711,7 @@
             <div class="mb-3">
                 <label class="block text-sm font-medium mb-1">Role</label>
                 <select name="role" class="w-full mb-2 p-2 border rounded" required>
-                    <option value="SuperAdmin">SuperAdmin</option>
+                    <!-- <option value="SuperAdmin">SuperAdmin</option> -->
                     <option value="Coach">Coach</option>
                     <option value="Staff">Admin</option>
                 </select>
